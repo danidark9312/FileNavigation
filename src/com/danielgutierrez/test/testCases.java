@@ -4,19 +4,19 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import com.danielgutierrez.FilesLookUp.Main;
+import com.danielgutierrez.filesLookUp.OperationManager;
 
 public class testCases {
 	
 //	@Test
 	public void testFileLookUp(){
-		new Main().main(null);
+		new OperationManager().main(null);
 	}
 	
 //	@Test
 	public void testReadFromFile(){
 		try {
-			new Main().readFilesIntoList();
+			OperationManager.getInstance().readFilesIntoList(null);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -25,9 +25,9 @@ public class testCases {
 	@Test
 	public void testGetCandidates(){
 		try {
-			Main main = new Main();
-			main.readFilesIntoList();
-			main.extractCandidatesFiles();
+			
+			OperationManager.getInstance().readFilesIntoList(null);
+			OperationManager.getInstance().extractCandidatesFiles();
 			
 		} catch (IOException e) {
 			e.printStackTrace();

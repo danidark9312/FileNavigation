@@ -1,4 +1,4 @@
-package com.danielgutierrez.FilesLookUp;
+package com.danielgutierrez.filesLookUp;
 
 import java.io.File;
 import java.io.FileInputStream;

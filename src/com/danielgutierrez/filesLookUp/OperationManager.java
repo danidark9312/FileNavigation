@@ -1,6 +1,5 @@
-package com.danielgutierrez.FilesLookUp;
+package com.danielgutierrez.filesLookUp;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.DataInput;
 import java.io.DataInputStream;
@@ -13,33 +12,55 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Main implements ThreadManager{
+import javax.swing.JProgressBar;
+import javax.swing.JTextField;
+import javax.swing.JTextPane;
+import javax.swing.SwingWorker;
+
+public class OperationManager extends SwingWorker<Object,Object> implements ThreadManager{
 	private List<File> listFiles;
 	private LinkedList<LinkedList<File>> candidateGroup;
 	private String root = "D://";
 	private List<List<File>> filesEqual;
+	private static OperationManager singleton;
+	
+	private JProgressBar progressBar;
+	private JTextPane log;
+	private LinkedList<String> logStack;
+	private boolean appendToCurrent;
+	
+	
+	
+	public static OperationManager getInstance() {
+		if (singleton != null)
+			return singleton;
+		else
+			return new OperationManager();
+	}
 	
 	public static void main(String args[]){
-		Main main = new Main();
+		OperationManager main = new OperationManager();
 		main.lookupFiles(null);
 		List<File> files = main.extractFileList();
 		System.out.println("end: "+files.size()+" files");
 		try {
-			main.writeFilesIntoFile();
+			main.writeFilesIntoFile(null);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
 	}
 	
-	public void writeFilesIntoFile() throws IOException{
-		File file = new File("listFiles.dat");
+	
+	
+	public void writeFilesIntoFile(File path) throws IOException{
+		path = (path == null) ? new File("") :path;
+		
+		File file = new File(path,"listFiles.dat");
 		System.out.println(file.getAbsolutePath());
 			file.createNewFile();
 		DataOutput output = new DataOutputStream(new FileOutputStream(file));
@@ -52,18 +73,25 @@ public class Main implements ThreadManager{
 		
 	}
 	
-	public void readFilesIntoList() throws IOException{
-		File file = new File("listFiles.dat");
-		
+	public void readFilesIntoList(File path) throws IOException{
+		path = (path == null) ? new File("") :path;
+		File file = new File(path,"listFiles.dat");
+		if(file.exists())
+			log("file do exists");
+		else{
+			log("file not found");
+			return;
+		}
 		DataInput output = new DataInputStream(new FileInputStream(file));
 		
 		String tempDir;
 		try{
+			listFiles.clear();
 			while((tempDir = output.readUTF()) != null){
 				listFiles.add(new File(tempDir));
 			}	
 		}catch(EOFException e){
-			System.out.println(listFiles.size()+" dir read");	
+			/*System.out.println*/log(listFiles.size()+" files read");	
 		}
 	}
 	
@@ -132,14 +160,15 @@ public class Main implements ThreadManager{
 	
 	@Override
 	public void onGroupThreadFinished() {
-		System.out.println("Thread "+Thread.currentThread().getId()+" finished");
+		/*System.out.println*/log("Thread "+Thread.currentThread().getId()+" finished");
 		if(LookUpThread.threadsAlive == 0){
 			writeOnFileGroups(filesEqual);
 		}
 	}
 	
 	private void writeOnFileGroups(List<List<File>> candidateGroup){
-		System.out.println("preparing for writing on file");
+		//System.out.println("preparing for writing on file");
+		log("preparing for writing on file");
 		File file = new File("candidates groups.dat");
 		System.out.println(file.getAbsolutePath());
 		BufferedWriter output = null;
@@ -166,15 +195,28 @@ public class Main implements ThreadManager{
 		}
 	}
 	
-	public Main(){
+	public OperationManager(){
 		this.listFiles = new ArrayList();
+		this.logStack = new LinkedList<String>();
 	}
 	
 	public List<File> extractFileList(){
 		return listFiles;
 	}
 	
-	public void lookupFiles(String parent) {
+	public void scanNow(String parent,boolean append){
+		if(!append){
+			listFiles.clear();	
+		}
+		lookupFiles(parent);
+		
+		dumpToLogStack();
+		
+		log("files found: "+listFiles.size());
+		log("scan finished");
+	}
+	
+	private void lookupFiles(String parent) {
 		File rootFile = new File(parent == null ? root : parent);
 		File initList[] = rootFile.listFiles();
 
@@ -187,10 +229,14 @@ public class Main implements ThreadManager{
 		File[] folders = getFolderInFile(rootFile);
 
 		for (File file : folders) {
+			logStack.push("scanning folder: "+file.getAbsolutePath());
 			if (file.list()!=null && file.list().length > 0) {
 				lookupFiles(file.getAbsolutePath());
 			}
 		}
+		
+		
+		
 
 	}
 	private File[] getFolderInFile(File base){
@@ -205,6 +251,49 @@ public class Main implements ThreadManager{
 		return  folders.toArray(new File[0]);
 	}
 
-	
+private void log(String text){
+	this.log.setText(this.log.getText()+"\n"+text);
+}
+
+public void initDialog(JProgressBar bar,JTextPane field){
+	this.progressBar = bar;
+	this.log = field;
+}
+
+@Override
+protected Object doInBackground(){
+	Thread tr = new Thread(new Runnable() {
+		@Override
+		public void run() {
+			publish(this);
+			try {
+				Thread.sleep(3000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	});
+	tr.start();
+	scanNow(null, false);
+	tr.interrupt();
+	return null;
+}
+@Override
+
+protected void process(List e) {
+	dumpToLogStack();
+}
+
+private void dumpToLogStack(){
+	String logLine = null;
+	while((logLine = logStack.poll())!=null){
+		log(logLine);
+	}
+}
+
+public void setParameterScan(String baseDir,boolean appendToCurrent){
+	root = baseDir;
+	this.appendToCurrent = appendToCurrent;
+}
 
 }
