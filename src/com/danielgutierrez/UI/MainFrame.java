@@ -29,6 +29,7 @@ import java.io.IOException;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 
+import com.danielgutierrez.filesLookUp.ManagerWorker;
 import com.danielgutierrez.filesLookUp.OperationManager;
 
 import java.awt.GridBagLayout;
@@ -88,10 +89,9 @@ public class MainFrame {
 		pnlButtonsTool.setLayout(new GridLayout(10, 1, 0, 0));
 		
 		JButton btnScanDisk = new JButton("Scan Disk");
-		btnScanDisk.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
+		btnScanDisk.addActionListener(new ActionListener() {			public void actionPerformed(ActionEvent e) {
 				manager.setParameterScan(baseDir.getAbsolutePath(), false);
-				manager.execute();
+				new ManagerWorker(manager, ManagerWorker.OPERATION_SCAN).execute();
 			}
 		});
 		

@@ -22,7 +22,7 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.SwingWorker;
 
-public class OperationManager extends SwingWorker<Object,Object> implements ThreadManager{
+public class OperationManager implements ThreadManager{
 	private List<File> listFiles;
 	private LinkedList<LinkedList<File>> candidateGroup;
 	private String root = "D://";
@@ -43,7 +43,7 @@ public class OperationManager extends SwingWorker<Object,Object> implements Thre
 			return new OperationManager();
 	}
 	
-	public static void main(String args[]){
+	/*public static void main(String args[]){
 		OperationManager main = new OperationManager();
 		main.lookupFiles(null);
 		List<File> files = main.extractFileList();
@@ -53,6 +53,10 @@ public class OperationManager extends SwingWorker<Object,Object> implements Thre
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}*/
+	
+	public String getBaseDir(){
+		return this.root;
 	}
 	
 	
@@ -204,19 +208,22 @@ public class OperationManager extends SwingWorker<Object,Object> implements Thre
 		return listFiles;
 	}
 	
-	public void scanNow(String parent,boolean append){
+	public void scanNow(String parent,boolean append,SwingWorker worker){
+		System.out.println("starting scan ..");
 		if(!append){
+			System.out.println("prev list clean ..");
 			listFiles.clear();	
 		}
 		lookupFiles(parent);
-		
-		dumpToLogStack();
+		System.out.println("dumping logs ..");
+		//dumpToLogStack();
 		
 		log("files found: "+listFiles.size());
 		log("scan finished");
 	}
 	
 	private void lookupFiles(String parent) {
+		System.out.println("looking files..");
 		File rootFile = new File(parent == null ? root : parent);
 		File initList[] = rootFile.listFiles();
 
@@ -260,32 +267,12 @@ public void initDialog(JProgressBar bar,JTextPane field){
 	this.log = field;
 }
 
-@Override
-protected Object doInBackground(){
-	Thread tr = new Thread(new Runnable() {
-		@Override
-		public void run() {
-			publish(this);
-			try {
-				Thread.sleep(3000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-	});
-	tr.start();
-	scanNow(null, false);
-	tr.interrupt();
-	return null;
-}
-@Override
 
-protected void process(List e) {
-	dumpToLogStack();
-}
 
-private void dumpToLogStack(){
+
+public void dumpToLogStack(){
 	String logLine = null;
+	System.out.println("logs pendientes: "+logStack.size());
 	while((logLine = logStack.poll())!=null){
 		log(logLine);
 	}

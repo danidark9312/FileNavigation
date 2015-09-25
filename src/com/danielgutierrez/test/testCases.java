@@ -10,7 +10,7 @@ public class testCases {
 	
 //	@Test
 	public void testFileLookUp(){
-		new OperationManager().main(null);
+		//new OperationManager().main(null);
 	}
 	
 //	@Test
