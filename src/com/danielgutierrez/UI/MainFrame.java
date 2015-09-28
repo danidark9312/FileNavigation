@@ -29,9 +29,11 @@ import java.io.IOException;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 
-import com.danielgutierrez.filesLookUp.ManagerWorker;
 import com.danielgutierrez.filesLookUp.OperationManager;
+import com.danielgutierrez.workers.LogWorker;
+import com.danielgutierrez.workers.ManagerWorker;
 
+import java.awt.FileDialog;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
@@ -91,6 +93,8 @@ public class MainFrame {
 		JButton btnScanDisk = new JButton("Scan Disk");
 		btnScanDisk.addActionListener(new ActionListener() {			public void actionPerformed(ActionEvent e) {
 				manager.setParameterScan(baseDir.getAbsolutePath(), false);
+				LogWorker.turnonLogFlag();
+				new LogWorker(manager).execute();
 				new ManagerWorker(manager, ManagerWorker.OPERATION_SCAN).execute();
 			}
 		});
@@ -120,6 +124,19 @@ public class MainFrame {
 		JButton btnSaveResult = new JButton("Save Scan");
 		btnSaveResult.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
+				
+				FileDialog fd = new FileDialog(frame, "Choose a file", FileDialog.SAVE);
+				fd.setFile("*.dat");
+				fd.setVisible(true);
+				if(fd.getFile()!=null)
+					try {
+						OperationManager.getInstance().writeFilesIntoFile(new File(fd.getFile()));
+						JOptionPane.showMessageDialog(frame, "Se escribió con éxito");
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				else
+					JOptionPane.showMessageDialog(frame, "Se cancelo la seleccion de archivo");
 			}
 		});
 		pnlButtonsTool.add(btnSaveResult);
@@ -128,19 +145,20 @@ public class MainFrame {
 		btnLoadScan.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-				int returnVal = fc.showOpenDialog(frame);
-				 if (returnVal == JFileChooser.APPROVE_OPTION) {
-			            File file = fc.getSelectedFile();
+				FileDialog fd = new FileDialog(frame, "Choose a file", FileDialog.LOAD);
+						fd.setFile("*.dat");
+			            fd.setVisible(true);
+			            String file = fd.getFile();
+			            if(file!=null){
 			            try {
-							manager.readFilesIntoList(file);
+			            	System.out.println("file: "+file);
+							manager.readFilesIntoList(new File(file));
 						} catch (IOException e1) {
-							JOptionPane optionPane = new JOptionPane("can't find or read file");
+							JOptionPane.showMessageDialog(frame, "No se encuentra el archivo");
 						}
 			        } else {
-			            JOptionPane optionPane = new JOptionPane("canceled file searcher");
-			            optionPane.show();
+			        	JOptionPane.showMessageDialog(frame, "Se cancelo la seleccion");
+			            
 			        }
 			}
 		
@@ -148,6 +166,11 @@ public class MainFrame {
 		pnlButtonsTool.add(btnLoadScan);
 		
 		JButton btnSearchSimilarFiles = new JButton("Search Similar");
+		btnSearchSimilarFiles.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				manager.getInstance().extractCandidatesFiles();
+			}
+		});
 		pnlButtonsTool.add(btnSearchSimilarFiles);
 		
 		JButton btnClearConsole = new JButton("Clear Console");

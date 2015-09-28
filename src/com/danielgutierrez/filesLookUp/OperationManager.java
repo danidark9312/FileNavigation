@@ -12,6 +12,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -20,6 +21,7 @@ import java.util.List;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 public class OperationManager implements ThreadManager{
@@ -31,16 +33,23 @@ public class OperationManager implements ThreadManager{
 	
 	private JProgressBar progressBar;
 	private JTextPane log;
-	private LinkedList<String> logStack;
+	private static LinkedList<String> logStack;
 	private boolean appendToCurrent;
 	
+	private boolean isOpenProgressInfo = true;
+	List<File> directoriesForProgress;
+	
+	private int filesCount;
+	
+	public static int getLogStackSize(){
+		return logStack.size();
+	}
 	
 	
 	public static OperationManager getInstance() {
-		if (singleton != null)
-			return singleton;
-		else
-			return new OperationManager();
+		if (singleton == null)
+			singleton = new OperationManager();
+		return singleton;
 	}
 	
 	/*public static void main(String args[]){
@@ -64,24 +73,25 @@ public class OperationManager implements ThreadManager{
 	public void writeFilesIntoFile(File path) throws IOException{
 		path = (path == null) ? new File("") :path;
 		
-		File file = new File(path,"listFiles.dat");
+		File file = path;
 		System.out.println(file.getAbsolutePath());
 			file.createNewFile();
 		DataOutput output = new DataOutputStream(new FileOutputStream(file));
 		sortFilesBySizeAsc();
-		System.out.println("starting to write..");
+		System.out.println("starting to write.. "+listFiles.size()+" files");
 		for(File fileTmp : listFiles){
 			output.writeUTF(fileTmp.getAbsolutePath());;
 		}
+		
 		System.out.println("write finished..");
 		
 	}
 	
 	public void readFilesIntoList(File path) throws IOException{
 		path = (path == null) ? new File("") :path;
-		File file = new File(path,"listFiles.dat");
+		File file = path;
 		if(file.exists())
-			log("file do exists");
+			log("file does exists");
 		else{
 			log("file not found");
 			return;
@@ -199,9 +209,11 @@ public class OperationManager implements ThreadManager{
 		}
 	}
 	
-	public OperationManager(){
+	private OperationManager(){
 		this.listFiles = new ArrayList();
 		this.logStack = new LinkedList<String>();
+		this.directoriesForProgress = new ArrayList<File>(30);
+		((ArrayList)directoriesForProgress).trimToSize();
 	}
 	
 	public List<File> extractFileList(){
@@ -209,6 +221,8 @@ public class OperationManager implements ThreadManager{
 	}
 	
 	public void scanNow(String parent,boolean append,SwingWorker worker){
+		
+		
 		System.out.println("starting scan ..");
 		if(!append){
 			System.out.println("prev list clean ..");
@@ -219,11 +233,14 @@ public class OperationManager implements ThreadManager{
 		//dumpToLogStack();
 		
 		log("files found: "+listFiles.size());
+		System.out.println("folders for progress "+directoriesForProgress.size());
+		System.out.println("scan finished");
 		log("scan finished");
+		this.isOpenProgressInfo =  true;
 	}
 	
 	private void lookupFiles(String parent) {
-		System.out.println("looking files..");
+		
 		File rootFile = new File(parent == null ? root : parent);
 		File initList[] = rootFile.listFiles();
 
@@ -234,18 +251,26 @@ public class OperationManager implements ThreadManager{
 			}
 		}
 		File[] folders = getFolderInFile(rootFile);
-
+		addFolderForProgress(folders);
 		for (File file : folders) {
 			logStack.push("scanning folder: "+file.getAbsolutePath());
+			
+			
 			if (file.list()!=null && file.list().length > 0) {
 				lookupFiles(file.getAbsolutePath());
 			}
+			
+			if(directoriesForProgress.remove(file)){
+				updateProgress();	
+			}
+			
 		}
-		
-		
 		
 
 	}
+	
+	
+	
 	private File[] getFolderInFile(File base){
 		List<File> folders = new ArrayList<File>();
 		File filetmp;
@@ -270,17 +295,50 @@ public void initDialog(JProgressBar bar,JTextPane field){
 
 
 
-public void dumpToLogStack(){
+public void dumpToLogStack(int buffer){
 	String logLine = null;
-	System.out.println("logs pendientes: "+logStack.size());
-	while((logLine = logStack.poll())!=null){
+	//System.out.println("logs pendientes: "+logStack.size());
+	while((logLine = logStack.poll())!=null && buffer-- != 0){
 		log(logLine);
 	}
+}
+
+public void updateProgress(){
+	SwingUtilities.invokeLater(new Runnable() {
+		@Override
+		public void run() {
+			int ScannedFolderProgress = (directoriesForProgress.size()-30)*(-1);
+			System.out.println("progress: "+100*ScannedFolderProgress/30 	);
+			progressBar.setValue(100*ScannedFolderProgress/30);
+			
+		}
+	});
+	
+}
+
+public void dumpToLogStack(){
+	dumpToLogStack(-1);
 }
 
 public void setParameterScan(String baseDir,boolean appendToCurrent){
 	root = baseDir;
 	this.appendToCurrent = appendToCurrent;
+}
+
+
+
+
+private void addFolderForProgress(File[] file){
+	if(this.directoriesForProgress.size()>=30){
+		directoriesForProgress = directoriesForProgress.subList(0, 30);
+		this.isOpenProgressInfo = false;
+	}
+	
+	if(isOpenProgressInfo){
+		this.directoriesForProgress.addAll(Arrays.asList(file));
+		
+	}
+		
 }
 
 }
