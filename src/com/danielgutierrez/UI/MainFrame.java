@@ -1,49 +1,41 @@
 package com.danielgutierrez.UI;
 
-import java.awt.EventQueue;
-
-import javax.swing.JFrame;
-import javax.swing.JProgressBar;
-
 import java.awt.BorderLayout;
-
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JLabel;
-import javax.swing.JButton;
-import javax.swing.RepaintManager;
-import javax.swing.UIManager;
-import javax.swing.border.BevelBorder;
-
-import java.awt.FlowLayout;
-
-import javax.swing.BoxLayout;
-
+import java.awt.Color;
+import java.awt.EventQueue;
+import java.awt.FileDialog;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.event.ActionListener;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
-
+import javax.swing.border.BevelBorder;
 import com.danielgutierrez.filesLookUp.OperationManager;
 import com.danielgutierrez.workers.LogWorker;
 import com.danielgutierrez.workers.ManagerWorker;
-
-import java.awt.FileDialog;
-import java.awt.GridBagLayout;
-import java.awt.GridBagConstraints;
-import java.awt.Insets;
 
 public class MainFrame {
 	private JLabel lblBaseFolder;
 	private JFrame frame;
 	private OperationManager manager;
 	private File baseDir;
-	private JTextPane txtPane; 
+	private JTextPane txtPane;
+	private JButton btnScanDisk;
+	public static JButton btnSaveResult;
+	public static JButton btnSearchSimilarFiles;
+	private static ModalMessage modalMessage;
 
 	/**
 	 * Launch the application.
@@ -69,74 +61,117 @@ public class MainFrame {
 		initialize();
 	}
 
+	private void selectBaseDirectoryAction(){
+		JFileChooser fc = new JFileChooser();
+		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		int returnVal = fc.showOpenDialog(frame);
+		 if (returnVal == JFileChooser.APPROVE_OPTION) {
+	            File file = fc.getSelectedFile();
+	            btnScanDisk.setEnabled(true);
+	            //This is where a real application would open the file.
+	            lblBaseFolder.setText(file.getAbsolutePath());
+	            baseDir = file;
+	        }
+	}
+	
+	private void scanAction(){
+			manager.setParameterScan(baseDir.getAbsolutePath(), false);
+			LogWorker.turnonLogFlag();
+			new LogWorker(manager).execute();
+			new ManagerWorker(manager, ManagerWorker.OPERATION_SCAN).execute();
+	}
+	
+	private void saveResultAction(){
+		FileDialog fd = new FileDialog(frame, "Choose a file", FileDialog.SAVE);
+		fd.setFile("scan.res");
+		fd.setVisible(true);
+		if(fd.getFile()!=null)
+			try {
+				OperationManager.getInstance().writeFilesIntoFile(new File(fd.getFile()));
+				JOptionPane.showMessageDialog(frame, "Saved Successfull");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+	}
+	
+	
+	private void compareSimilarAction(){
+		
+		FileDialog fd = new FileDialog(frame, "Save Result", FileDialog.SAVE);
+		fd.setFile("scan.dup");
+		fd.setVisible(true);
+		if(fd.getFile()!=null){
+			manager.setParameterCompare(new File(fd.getFile()));
+			new LogWorker(manager).execute();
+			new ManagerWorker(manager, ManagerWorker.OPERATION_COMPARE).execute();
+			
+		}
+	}
+	
+	private void loadScanAction(){
+		
+		FileDialog fd = new FileDialog(frame, "Choose a file", FileDialog.LOAD);
+				fd.setFile("scan.res");
+	            fd.setVisible(true);
+	            String file = fd.getFile();
+	            if(file!=null){
+	            try {
+					manager.readFilesIntoList(new File(file));
+				} catch (IOException e1) {
+					JOptionPane.showMessageDialog(frame, "No se encuentra el archivo");
+				}
+	        }
+	
+	}
+	
 	/**
 	 * Initialize the contents of the frame.
 	 */
+	
 	private void initialize() {
 		
 		manager = OperationManager.getInstance();
-		
+		modalMessage = new ModalMessage(frame, "");
 		
 		frame = new JFrame();
 		frame.setBounds(100, 100, 450, 300);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		JProgressBar progressBar = new JProgressBar();
+		progressBar.setForeground(Color.blue);
+		//progressBar.setForeground(new Color(246, 156, 85));
 		progressBar.setValue(50);
+		progressBar.setStringPainted(true);
+		
 		frame.getContentPane().add(progressBar, BorderLayout.SOUTH);
 		
 		JPanel pnlButtonsTool = new JPanel();
 		pnlButtonsTool.setBorder(new BevelBorder(BevelBorder.RAISED, null, null, null, null));
+		
 		frame.getContentPane().add(pnlButtonsTool, BorderLayout.WEST);
 		pnlButtonsTool.setLayout(new GridLayout(10, 1, 0, 0));
 		
-		JButton btnScanDisk = new JButton("Scan Disk");
-		btnScanDisk.addActionListener(new ActionListener() {			public void actionPerformed(ActionEvent e) {
-				manager.setParameterScan(baseDir.getAbsolutePath(), false);
-				LogWorker.turnonLogFlag();
-				new LogWorker(manager).execute();
-				new ManagerWorker(manager, ManagerWorker.OPERATION_SCAN).execute();
+		btnScanDisk = new JButton("Scan Disk");
+		btnScanDisk.setEnabled(false);
+		btnScanDisk.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				scanAction();
 			}
 		});
-		
-		
 		JButton btnSelectBaseFolder = new JButton("Select Base Folder");
 		btnSelectBaseFolder.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser fc = new JFileChooser();
-				fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-				int returnVal = fc.showOpenDialog(frame);
-				 if (returnVal == JFileChooser.APPROVE_OPTION) {
-			            File file = fc.getSelectedFile();
-			            //This is where a real application would open the file.
-			            lblBaseFolder.setText(file.getAbsolutePath());
-			            baseDir = file;
-			            frame.repaint();
-			        } else {
-			            JOptionPane optionPane = new JOptionPane("canceled file searcher");
-			            optionPane.show();
-			        }
+				selectBaseDirectoryAction();
 			}
 		});
 		pnlButtonsTool.add(btnSelectBaseFolder);
 		pnlButtonsTool.add(btnScanDisk);
 		
-		JButton btnSaveResult = new JButton("Save Scan");
+		btnSaveResult = new JButton("Save Scan");
+		btnSaveResult.setEnabled(false);
 		btnSaveResult.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				
-				FileDialog fd = new FileDialog(frame, "Choose a file", FileDialog.SAVE);
-				fd.setFile("*.dat");
-				fd.setVisible(true);
-				if(fd.getFile()!=null)
-					try {
-						OperationManager.getInstance().writeFilesIntoFile(new File(fd.getFile()));
-						JOptionPane.showMessageDialog(frame, "Se escribió con éxito");
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				else
-					JOptionPane.showMessageDialog(frame, "Se cancelo la seleccion de archivo");
+			saveResultAction();
 			}
 		});
 		pnlButtonsTool.add(btnSaveResult);
@@ -145,30 +180,17 @@ public class MainFrame {
 		btnLoadScan.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
-				FileDialog fd = new FileDialog(frame, "Choose a file", FileDialog.LOAD);
-						fd.setFile("*.dat");
-			            fd.setVisible(true);
-			            String file = fd.getFile();
-			            if(file!=null){
-			            try {
-			            	System.out.println("file: "+file);
-							manager.readFilesIntoList(new File(file));
-						} catch (IOException e1) {
-							JOptionPane.showMessageDialog(frame, "No se encuentra el archivo");
-						}
-			        } else {
-			        	JOptionPane.showMessageDialog(frame, "Se cancelo la seleccion");
-			            
-			        }
+				loadScanAction();
 			}
 		
 		});
 		pnlButtonsTool.add(btnLoadScan);
 		
-		JButton btnSearchSimilarFiles = new JButton("Search Similar");
+		btnSearchSimilarFiles = new JButton("Search Similar");
+		btnSearchSimilarFiles.setEnabled(false);
 		btnSearchSimilarFiles.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				manager.getInstance().extractCandidatesFiles();
+				compareSimilarAction();
 			}
 		});
 		pnlButtonsTool.add(btnSearchSimilarFiles);
@@ -241,6 +263,13 @@ public class MainFrame {
 		
 		
 		manager.initDialog(progressBar,txtPane);
+	}
+	
+	public static void showDialog(String text){
+		modalMessage.showDialog(text);
+	}
+	public static void hideDialog(){
+		modalMessage.hideDialog();
 	}
 
 }

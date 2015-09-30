@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.rmi.server.LogStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -13,12 +14,13 @@ public class LookUpThread implements Runnable{
 	private int status = 0;
 	public static int threadsAlive = 0;
 	private String threadName;
-	private LinkedList<LinkedList<File>> candidates;
-	List<List<File>> globalFilesEqual;
+	private LinkedList<LinkedList<FileCached>> candidates;
+	List<List<FileCached>> globalFilesEqual;
 	private ThreadManager manager;
+	private OperationManager operationManager;
 	
-	public LookUpThread(LinkedList<LinkedList<File>> candidates,List<List<File>> filesEqual){
-		threadsAlive++;
+	public LookUpThread(LinkedList<LinkedList<FileCached>> candidates,List<List<FileCached>> filesEqual){
+		this.operationManager = OperationManager.getInstance();
 		this.globalFilesEqual = filesEqual;
 		this.candidates = candidates;
 	}
@@ -29,26 +31,29 @@ public class LookUpThread implements Runnable{
 	
 	@Override
 	public void run() {
-		LinkedList<File> comparableList = candidates.poll();
-		System.out.println("Thread: "+Thread.currentThread().getName()+" working on the list "+comparableList.toString().substring(0, 200));
+		LinkedList<FileCached> comparableList = candidates.poll();
+		
 		if(comparableList == null)
 			return;
-		File file = null;
+		operationManager.updateProgress(candidates.size());
+		System.out.println("Thread: "+Thread.currentThread().getName());
+		operationManager.log("Thread: "+Thread.currentThread().getName());
+		FileCached fileCached = null;
 		
-		while((file=comparableList.poll())!=null){
-			List<File> equals = new ArrayList<File>();
-			equals.add(file);
+		while((fileCached=comparableList.poll())!=null){
+			List<FileCached> equals = new ArrayList<FileCached>();
+			equals.add(fileCached);
 			for(int i=0;i<comparableList.size();i++){
-				File fileCompare = comparableList.get(i);
+				FileCached fileCompare = comparableList.get(i);
 				
-				if(!compareFileExtensions(fileCompare,file)){
+				if(!compareFileExtensions(fileCompare.getFile(),fileCached.getFile())){
 					continue;
 				}
-				else if(fileCompare.getName().equals(file.getName())){
+				else if(fileCompare.getFile().getName().equals(fileCached.getFile().getName())){
 					equals.add(fileCompare);
 					comparableList.remove(fileCompare);
 					i--;
-				}else if(fileCompare.length() == file.length() && compareFilesByData(fileCompare,file)){
+				}else if(fileCompare.size == fileCached.size && compareFilesByData(fileCompare.getFile(),fileCached.getFile())){
 					equals.add(fileCompare);
 					comparableList.remove(fileCompare);
 					i--;
@@ -109,10 +114,12 @@ private boolean compareFilesByData(File file1,File file2){
 	
 	public void pickupFile(){
 		if(candidates.size()>0){
+			System.out.println("picking a new file");
 			Thread tr = new Thread(this);
 			tr.start();
 		}else{
 			this.threadsAlive--;
+			System.out.println("finish one thread");
 			manager.onGroupThreadFinished();
 		}
 	}

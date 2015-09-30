@@ -1,9 +1,8 @@
 package com.danielgutierrez.workers;
 
 import java.util.List;
-
 import javax.swing.SwingWorker;
-
+import com.danielgutierrez.UI.MainFrame;
 import com.danielgutierrez.filesLookUp.OperationManager;
 
 public class ManagerWorker<T, V> extends SwingWorker<Object,Object> {
@@ -40,11 +39,12 @@ public class ManagerWorker<T, V> extends SwingWorker<Object,Object> {
 			/*tr.setPriority(Thread.MAX_PRIORITY);
 			tr.start();*/
 			manager.scanNow(manager.getBaseDir(), false,this);
-			LogWorker.turnoffLogFlag();
+			
 			//tr.interrupt();
 			break;
 		case OPERATION_COMPARE:
-
+			manager.extractCandidatesFiles();
+			LogWorker.turnoffLogFlag();
 			break;
 
 		default:
@@ -59,7 +59,15 @@ public class ManagerWorker<T, V> extends SwingWorker<Object,Object> {
 	
 	@Override
 	protected void process(List<Object> v){
-		manager.dumpToLogStack();		
+		manager.dumpToLogStack(20);		
 	}
+	
+	@Override
+	protected void done(){
+		MainFrame.btnSaveResult.setEnabled(true);
+		MainFrame.btnSearchSimilarFiles.setEnabled(true);
+	}
+	
+	
 
 }

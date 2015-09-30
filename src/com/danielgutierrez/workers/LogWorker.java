@@ -34,9 +34,11 @@ public class LogWorker<T, V> extends SwingWorker<Object,Object> {
 	protected T doInBackground() throws Exception {
 		while(flagWriteLog || OperationManager.getLogStackSize()==0){
 			publish(new Object());
+			
 			Thread.sleep(50);
 		}
-		
+		//iniciamos nuevamente para procesos posteriores
+		turnonLogFlag();
 		return null;
 				
 	}
@@ -48,7 +50,7 @@ public class LogWorker<T, V> extends SwingWorker<Object,Object> {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				manager.dumpToLogStack(10);
+				manager.dumpToLogStack((!flagWriteLog)?-1:50);
 				
 			}
 		});
