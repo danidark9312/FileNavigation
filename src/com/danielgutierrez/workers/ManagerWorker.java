@@ -44,6 +44,7 @@ public class ManagerWorker<T, V> extends SwingWorker<Object,Object> {
 			break;
 		case OPERATION_COMPARE:
 			manager.extractCandidatesFiles();
+			System.out.println("turning off the log");
 			LogWorker.turnoffLogFlag();
 			break;
 

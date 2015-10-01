@@ -2,8 +2,10 @@ package com.danielgutierrez.UI;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.FileDialog;
+import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -12,6 +14,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -21,12 +25,18 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.BevelBorder;
+import sun.font.CreatedFontTracker;
 import com.danielgutierrez.filesLookUp.OperationManager;
 import com.danielgutierrez.workers.LogWorker;
 import com.danielgutierrez.workers.ManagerWorker;
+import java.awt.FlowLayout;
+import javax.swing.SwingConstants;
 
 public class MainFrame {
+	private static final String version = "SimFile V1.0 Alpha";
 	private JLabel lblBaseFolder;
 	private JFrame frame;
 	private OperationManager manager;
@@ -36,6 +46,7 @@ public class MainFrame {
 	public static JButton btnSaveResult;
 	public static JButton btnSearchSimilarFiles;
 	private static ModalMessage modalMessage;
+	public static JLabel lblFiles;
 
 	/**
 	 * Launch the application.
@@ -134,11 +145,20 @@ public class MainFrame {
 		modalMessage = new ModalMessage(frame, "");
 		
 		frame = new JFrame();
-		frame.setBounds(100, 100, 450, 300);
+		frame.setBounds(100, 100, 558, 394);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
+		
+			try {
+				UIManager.setLookAndFeel(
+					     "com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+		
+		
 		JProgressBar progressBar = new JProgressBar();
-		progressBar.setForeground(Color.blue);
+		//progressBar.setForeground(Color.blue);
 		//progressBar.setForeground(new Color(246, 156, 85));
 		progressBar.setValue(50);
 		progressBar.setStringPainted(true);
@@ -195,15 +215,8 @@ public class MainFrame {
 		});
 		pnlButtonsTool.add(btnSearchSimilarFiles);
 		
-		JButton btnClearConsole = new JButton("Clear Console");
-		btnClearConsole.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				txtPane.setText("");
-			}
-		});
-		pnlButtonsTool.add(btnClearConsole);
 		
-		JLabel lblSimfileV = new JLabel("SimFile V1.0");
+		JLabel lblSimfileV = new JLabel(version);
 		frame.getContentPane().add(lblSimfileV, BorderLayout.NORTH);
 		
 		JPanel pnlScrollContainer = new JPanel();
@@ -221,14 +234,17 @@ public class MainFrame {
 		pnlScrollContainer.add(panel, BorderLayout.NORTH);
 		panel.setBorder(new BevelBorder(BevelBorder.RAISED, null, null, null, null));
 		GridBagLayout gbl_panel = new GridBagLayout();
-		gbl_panel.columnWidths = new int[]{149, 149, 0};
-		gbl_panel.rowHeights = new int[]{16, 16, 0};
-		gbl_panel.columnWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
-		gbl_panel.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
+		gbl_panel.columnWidths = new int[] {100, 100, 149};
+		gbl_panel.rowHeights = new int[] {30, 16};
+		gbl_panel.columnWeights = new double[]{0.0, 0.0, 1.0};
+		gbl_panel.rowWeights = new double[]{0.0, 1.0};
 		panel.setLayout(gbl_panel);
 		
 		//lblBaseFolder = new JLabel("Folder Selected:");
 		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.weightx = 0.5;
+		gbc.gridwidth = 0;
+		gbc.insets = new Insets(0, 0, 5, 5);
 		gbc.anchor = GridBagConstraints.WEST;
 		gbc.fill = GridBagConstraints.VERTICAL;
 		gbc.gridx = 0;
@@ -238,24 +254,52 @@ public class MainFrame {
 		
 		lblBaseFolder = new JLabel("none");
 		GridBagConstraints gbc_lblBaseFolder = new GridBagConstraints();
-		gbc_lblBaseFolder.gridwidth = 2;
+		gbc_lblBaseFolder.weightx = 0.5;
+		gbc_lblBaseFolder.gridwidth = 0;
 		gbc_lblBaseFolder.anchor = GridBagConstraints.WEST;
 		gbc_lblBaseFolder.fill = GridBagConstraints.VERTICAL;
-		gbc_lblBaseFolder.insets = new Insets(0, 0, 5, 0);
+		gbc_lblBaseFolder.insets = new Insets(0, 0, 5, 5);
 		gbc_lblBaseFolder.gridx = 1;
 		gbc_lblBaseFolder.gridy = 0;
 		panel.add(lblBaseFolder, gbc_lblBaseFolder);
 		
+		JPanel panel_1 = new JPanel();
+		GridBagConstraints gbc_panel_1 = new GridBagConstraints();
+		gbc_panel_1.anchor = GridBagConstraints.EAST;
+		gbc_panel_1.gridwidth = 0;
+		gbc_panel_1.insets = new Insets(0, 0, 5, 0);
+		gbc_panel_1.gridheight = 2;
+		gbc_panel_1.gridx = 2;
+		gbc_panel_1.gridy = 0;
+		panel.add(panel_1, gbc_panel_1);
+		panel_1.setLayout(new BorderLayout(5, 5));
+		
+		JButton btnNewButton = new JButton("");
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				txtPane.setText("");
+			}
+		});
+		btnNewButton.setIcon(new ImageIcon("D:\\DanielGutierrez\\Proyectos\\FileNavigation\\FileNavigation\\icons\\clearConsole2.png"));
+		panel_1.add(btnNewButton, BorderLayout.CENTER);
+		
 		JLabel lblFilesFound = new JLabel("Files Found:");
 		GridBagConstraints gbc_lblFilesFound = new GridBagConstraints();
+		gbc_lblFilesFound.weightx = 0.5;
+		gbc_lblFilesFound.anchor = GridBagConstraints.WEST;
+		gbc_lblFilesFound.gridwidth = 0;
 		gbc_lblFilesFound.fill = GridBagConstraints.BOTH;
-		gbc_lblFilesFound.insets = new Insets(0, 0, 0, 5);
+		gbc_lblFilesFound.insets = new Insets(0, 0, 5, 5);
 		gbc_lblFilesFound.gridx = 0;
 		gbc_lblFilesFound.gridy = 1;
 		panel.add(lblFilesFound, gbc_lblFilesFound);
 		
-		JLabel lblFiles = new JLabel("0");
+		lblFiles = new JLabel("0");
 		GridBagConstraints gbc_lblFiles = new GridBagConstraints();
+		gbc_lblFiles.weightx = 0.5;
+		gbc_lblFiles.anchor = GridBagConstraints.WEST;
+		gbc_lblFiles.gridwidth = 0;
+		gbc_lblFiles.insets = new Insets(0, 0, 5, 5);
 		gbc_lblFiles.fill = GridBagConstraints.BOTH;
 		gbc_lblFiles.gridx = 1;
 		gbc_lblFiles.gridy = 1;

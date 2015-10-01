@@ -19,6 +19,10 @@ public class LookUpThread implements Runnable{
 	private ThreadManager manager;
 	private OperationManager operationManager;
 	
+	public void setName(String name){
+		this.threadName = name;
+	}
+	
 	public LookUpThread(LinkedList<LinkedList<FileCached>> candidates,List<List<FileCached>> filesEqual){
 		this.operationManager = OperationManager.getInstance();
 		this.globalFilesEqual = filesEqual;
@@ -32,12 +36,13 @@ public class LookUpThread implements Runnable{
 	@Override
 	public void run() {
 		LinkedList<FileCached> comparableList = candidates.poll();
-		
 		if(comparableList == null)
 			return;
+		System.out.println("polling list "+comparableList.peek());
+		
 		operationManager.updateProgress(candidates.size());
-		System.out.println("Thread: "+Thread.currentThread().getName());
-		operationManager.log("Thread: "+Thread.currentThread().getName());
+		System.out.println("Thread: "+LookUpThread.this.threadName);
+		OperationManager.addLogToStack("Thread: "+LookUpThread.this.threadName);
 		FileCached fileCached = null;
 		
 		while((fileCached=comparableList.poll())!=null){
@@ -116,10 +121,12 @@ private boolean compareFilesByData(File file1,File file2){
 		if(candidates.size()>0){
 			System.out.println("picking a new file");
 			Thread tr = new Thread(this);
+			tr.setName(this.threadName);
 			tr.start();
 		}else{
-			this.threadsAlive--;
-			System.out.println("finish one thread");
+			System.out.println("finishing thread :"+threadName);
+			threadsAlive--;
+			OperationManager.addLogToStack("finish "+this.threadName+" thread");
 			manager.onGroupThreadFinished();
 		}
 	}

@@ -46,6 +46,10 @@ public class OperationManager implements ThreadManager {
 	public static int getLogStackSize() {
 		return logStack.size();
 	}
+	
+	public static void addLogToStack(String log){
+		logStack.addLast(log);
+	}
 
 	public static OperationManager getInstance() {
 		if (singleton == null)
@@ -144,28 +148,32 @@ public class OperationManager implements ThreadManager {
 		
 		filesEqual = new ArrayList<List<FileCached>>();
 		LookUpThread lookUpThread;
-		LookUpThread.threadsAlive = threadsToDeploy;
-		for (int i = 0; i < threadsToDeploy; i++) {
+		LookUpThread.threadsAlive = /*threadsToDeploy*/1;
+		logStack.addLast("theads deploy: "+LookUpThread.threadsAlive);
+		for (int i = 0; i < /*threadsToDeploy*/1; i++) {
 			lookUpThread = new LookUpThread(candidateGroup, filesEqual);
 			lookUpThread.setOnGroupThreadFinished(this);
+			lookUpThread.setName("Searcher_"+i);
 			lookUpThread.pickupFile();
 		}
 		// No finalizamos el metodo hasta que finalicen todos los threads
 		while (LookUpThread.threadsAlive != 0 || !writeFinished) {
 			try {
+				System.out.println("sleep 5s");
 				Thread.sleep(5000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
-		
+		System.out.println("no more sleep");
 		
 		return null;
 	}
 
 	@Override
 	public void onGroupThreadFinished() {
-		/* System.out.println */logStack.addLast("Thread " + Thread.currentThread().getId() + " finished");
+		/* System.out.println logStack.addLast("Thread " + Thread.currentThread().getName() + " finished");*/
+		System.out.println("validating threads alive: "+LookUpThread.threadsAlive);
 		if (LookUpThread.threadsAlive == 0) {
 			writeOnFileGroups(filesEqual);
 			writeFinished = true;
@@ -237,6 +245,7 @@ public class OperationManager implements ThreadManager {
 			@Override
 			public void run() {
 				MainFrame.hideDialog();
+				MainFrame.lblFiles.setText(String.valueOf(listFiles.size()));
 			}
 		});
 		
@@ -294,7 +303,6 @@ public class OperationManager implements ThreadManager {
 			@Override
 			public void run() {
 				int ScannedFolderProgress = (currentValue - maxValue) * (-1);
-				System.out.println("progress: " + 100 * ScannedFolderProgress / maxValue);
 				int progress = 100 * ScannedFolderProgress / maxValue;
 				progressBar.setValue(progress);
 				progressBar.setString(progress+"%");
