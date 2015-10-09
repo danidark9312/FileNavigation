@@ -113,6 +113,7 @@ public class MainFrame {
 		fd.setVisible(true);
 		if(fd.getFile()!=null){
 			manager.setParameterCompare(new File(fd.getFile()));
+			LogWorker.turnonLogFlag();
 			new LogWorker(manager).execute();
 			new ManagerWorker(manager, ManagerWorker.OPERATION_COMPARE).execute();
 			
@@ -140,7 +141,6 @@ public class MainFrame {
 	 */
 	
 	private void initialize() {
-		
 		manager = OperationManager.getInstance();
 		modalMessage = new ModalMessage(frame, "");
 		
@@ -155,20 +155,15 @@ public class MainFrame {
 			} catch (Exception e1) {
 				e1.printStackTrace();
 			}
+		frame.getContentPane().setLayout(new GridLayout(0, 1, 0, 0));
 		
-		
-		JProgressBar progressBar = new JProgressBar();
-		//progressBar.setForeground(Color.blue);
-		//progressBar.setForeground(new Color(246, 156, 85));
-		progressBar.setValue(50);
-		progressBar.setStringPainted(true);
-		
-		frame.getContentPane().add(progressBar, BorderLayout.SOUTH);
+		JPanel configPanel = new JPanel();
+		frame.getContentPane().add(configPanel);
+		configPanel.setLayout(new BorderLayout(0, 0));
 		
 		JPanel pnlButtonsTool = new JPanel();
+		configPanel.add(pnlButtonsTool, BorderLayout.WEST);
 		pnlButtonsTool.setBorder(new BevelBorder(BevelBorder.RAISED, null, null, null, null));
-		
-		frame.getContentPane().add(pnlButtonsTool, BorderLayout.WEST);
 		pnlButtonsTool.setLayout(new GridLayout(10, 1, 0, 0));
 		
 		btnScanDisk = new JButton("Scan Disk");
@@ -217,10 +212,10 @@ public class MainFrame {
 		
 		
 		JLabel lblSimfileV = new JLabel(version);
-		frame.getContentPane().add(lblSimfileV, BorderLayout.NORTH);
+		configPanel.add(lblSimfileV);
 		
 		JPanel pnlScrollContainer = new JPanel();
-		frame.getContentPane().add(pnlScrollContainer, BorderLayout.CENTER);
+		configPanel.add(pnlScrollContainer);
 		pnlScrollContainer.setLayout(new BorderLayout(0, 0));
 		
 		JScrollPane scrollPane = new JScrollPane();
@@ -305,8 +300,25 @@ public class MainFrame {
 		gbc_lblFiles.gridy = 1;
 		panel.add(lblFiles, gbc_lblFiles);
 		
+		JPanel filePanel = new JPanel();
+		frame.getContentPane().add(filePanel);
+		filePanel.setLayout(new BorderLayout(0, 0));
+		
+		
+		JProgressBar progressBar = new JProgressBar();
+		filePanel.add(progressBar, BorderLayout.NORTH);
+		//progressBar.setForeground(Color.blue);
+		//progressBar.setForeground(new Color(246, 156, 85));
+		progressBar.setValue(50);
+		progressBar.setStringPainted(true);
+		
 		
 		manager.initDialog(progressBar,txtPane);
+		
+		
+		FileChooserDialog dialog = new FileChooserDialog();
+		filePanel.add(dialog);
+		dialog.setVisible(true);
 	}
 	
 	public static void showDialog(String text){

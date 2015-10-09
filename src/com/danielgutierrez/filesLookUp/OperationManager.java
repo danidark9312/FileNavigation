@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
@@ -42,7 +43,9 @@ public class OperationManager implements ThreadManager {
 	private int filesCount;
 	private int maxValueProgressBar;
 	private boolean writeFinished;
-
+	private boolean openWrite;
+	private int maxBufferForLog = 600;
+	
 	public static int getLogStackSize() {
 		return logStack.size();
 	}
@@ -80,6 +83,13 @@ public class OperationManager implements ThreadManager {
 			output.writeUTF(fileTmp.getFile().getAbsolutePath());;
 		}
 		System.out.println("write finished..");
+		
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				JOptionPane.showMessageDialog(progressBar.getParent(), "Proccess finished successfull");
+			}
+		});
 	}
 
 	public void readFilesIntoList(File path) throws IOException {
@@ -141,6 +151,7 @@ public class OperationManager implements ThreadManager {
 		int threadsToDeploy = Runtime.getRuntime().availableProcessors();
 		logStack.addLast("creating: " + threadsToDeploy + " threads..");
 		candidateGroup = splitListInSubList(listFiles, 100);
+		logStack.addLast("files to compare: "+listFiles.size());
 		logStack.addLast("subList size " + candidateGroup.size());
 		
 		updateProgress(candidateGroup.size(), 0);
@@ -148,9 +159,9 @@ public class OperationManager implements ThreadManager {
 		
 		filesEqual = new ArrayList<List<FileCached>>();
 		LookUpThread lookUpThread;
-		LookUpThread.threadsAlive = /*threadsToDeploy*/1;
-		logStack.addLast("theads deploy: "+LookUpThread.threadsAlive);
-		for (int i = 0; i < /*threadsToDeploy*/1; i++) {
+		LookUpThread.threadsAlive = threadsToDeploy;
+		logStack.addLast("theads deployed: "+LookUpThread.threadsAlive);
+		for (int i = 0; i < threadsToDeploy; i++) {
 			lookUpThread = new LookUpThread(candidateGroup, filesEqual);
 			lookUpThread.setOnGroupThreadFinished(this);
 			lookUpThread.setName("Searcher_"+i);
@@ -159,7 +170,7 @@ public class OperationManager implements ThreadManager {
 		// No finalizamos el metodo hasta que finalicen todos los threads
 		while (LookUpThread.threadsAlive != 0 || !writeFinished) {
 			try {
-				System.out.println("sleep 5s");
+				System.out.println("sleep 5s: "+LookUpThread.threadsAlive);
 				Thread.sleep(5000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -171,10 +182,10 @@ public class OperationManager implements ThreadManager {
 	}
 
 	@Override
-	public void onGroupThreadFinished() {
+	public synchronized void onGroupThreadFinished() {
 		/* System.out.println logStack.addLast("Thread " + Thread.currentThread().getName() + " finished");*/
-		System.out.println("validating threads alive: "+LookUpThread.threadsAlive);
-		if (LookUpThread.threadsAlive == 0) {
+		System.out.println("validating threads alive: "+LookUpThread.threadsAlive+ " and write finish: "+writeFinished);
+		if (LookUpThread.threadsAlive == 0 && !writeFinished) {
 			writeOnFileGroups(filesEqual);
 			writeFinished = true;
 		}
@@ -246,10 +257,9 @@ public class OperationManager implements ThreadManager {
 			public void run() {
 				MainFrame.hideDialog();
 				MainFrame.lblFiles.setText(String.valueOf(listFiles.size()));
+				JOptionPane.showMessageDialog(progressBar.getParent(), "Proccess finished successfull");
 			}
 		});
-		
-		
 		this.isOpenProgressInfo = true;
 	}
 
@@ -283,6 +293,7 @@ public class OperationManager implements ThreadManager {
 			if (filetmp.isDirectory())
 				folders.add(filetmp);
 		}
+		
 		return folders.toArray(new File[0]);
 	}
 
@@ -306,19 +317,23 @@ public class OperationManager implements ThreadManager {
 				int progress = 100 * ScannedFolderProgress / maxValue;
 				progressBar.setValue(progress);
 				progressBar.setString(progress+"%");
+					
 			}
 		});
 	}
 	
 	public void updateProgress(int currentValue) {
 		updateProgress(maxValueProgressBar,currentValue);
+		
 	}
 
+	
+	
 	public void dumpToLogStack(int buffer) {
 		int logStackSize = logStack.size();
-		logStackSize = logStackSize>200?(200):logStackSize;
-		if(logStackSize>200){
-			logStack.subList(logStackSize-200, logStackSize);
+		logStackSize = logStackSize>maxBufferForLog?(maxBufferForLog):logStackSize;
+		if(logStackSize>maxBufferForLog){
+			logStack.subList(logStackSize-maxBufferForLog, logStackSize);
 			logStackSize = logStack.size();
 		}
 		

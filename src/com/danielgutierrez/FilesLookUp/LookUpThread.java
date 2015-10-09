@@ -12,7 +12,7 @@ import java.util.List;
 
 public class LookUpThread implements Runnable{
 	private int status = 0;
-	public static int threadsAlive = 0;
+	public volatile static int threadsAlive = 0;
 	private String threadName;
 	private LinkedList<LinkedList<FileCached>> candidates;
 	List<List<FileCached>> globalFilesEqual;
@@ -35,14 +35,19 @@ public class LookUpThread implements Runnable{
 	
 	@Override
 	public void run() {
+		
+		System.out.println(this.threadName+": picking a new file");
+		OperationManager.addLogToStack("Thread "+LookUpThread.this.threadName+" picking a new file");
+		
 		LinkedList<FileCached> comparableList = candidates.poll();
-		if(comparableList == null)
+		if(comparableList == null){
+			pickupFile();
 			return;
+		}
 		System.out.println("polling list "+comparableList.peek());
 		
 		operationManager.updateProgress(candidates.size());
 		System.out.println("Thread: "+LookUpThread.this.threadName);
-		OperationManager.addLogToStack("Thread: "+LookUpThread.this.threadName);
 		FileCached fileCached = null;
 		
 		while((fileCached=comparableList.poll())!=null){
@@ -119,7 +124,6 @@ private boolean compareFilesByData(File file1,File file2){
 	
 	public void pickupFile(){
 		if(candidates.size()>0){
-			System.out.println("picking a new file");
 			Thread tr = new Thread(this);
 			tr.setName(this.threadName);
 			tr.start();
