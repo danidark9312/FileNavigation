@@ -28,36 +28,126 @@ import com.danielgutierrez.UI.MainFrame;
 import com.danielgutierrez.workers.LogWorker;
 
 public class OperationManager implements ThreadManager {
+	private static OperationManager singleton;
+	private static LinkedList<String> logStack;
+	public static void addLogToStack(String log){
+		logStack.addLast(log);
+	}
+	public static OperationManager getInstance() {
+		if (singleton == null)
+			singleton = new OperationManager();
+		return singleton;
+	}
+	public static int getLogStackSize() {
+		return logStack.size();
+	}
 	private List<FileCached> listFiles;
+	private LinkedList<FileCached> filesSelected;
 	private LinkedList<LinkedList<FileCached>> candidateGroup;
 	private String root = "D://";
 	private List<List<FileCached>> filesEqual;
-	private static OperationManager singleton;
 	private JProgressBar progressBar;
 	private JTextPane log;
-	private static LinkedList<String> logStack;
 	private boolean appendToCurrent;
 	private File dirSaveResult;
 	private boolean isOpenProgressInfo = true;
 	List<File> directoriesForProgress;
 	private int filesCount;
 	private int maxValueProgressBar;
+	
 	private boolean writeFinished;
+	
 	private boolean openWrite;
+
 	private int maxBufferForLog = 600;
-	
-	public static int getLogStackSize() {
-		return logStack.size();
-	}
-	
-	public static void addLogToStack(String log){
-		logStack.addLast(log);
+
+	private OperationManager() {
+		this.listFiles = new ArrayList();
+		this.logStack = new LinkedList<String>();
+		this.directoriesForProgress = new ArrayList<File>(30);
 	}
 
-	public static OperationManager getInstance() {
-		if (singleton == null)
-			singleton = new OperationManager();
-		return singleton;
+	public void addFilesFromSelected(File[] files){
+		filesSelected.clear();
+		for(File file : files){
+			filesSelected.add(new FileCached(file));
+			logStack.push("file added" + file.getAbsolutePath());
+		}
+	}
+	public void addFilesFromSelected(List<FileCached> files){
+		filesSelected=new LinkedList<FileCached>(files);		
+	}
+
+	private void addFolderForProgress(File[] file) {
+		if (this.directoriesForProgress.size() >= 30) {
+			directoriesForProgress = directoriesForProgress.subList(0, 30);
+			this.isOpenProgressInfo = false;
+		}
+		if (isOpenProgressInfo) {
+			this.directoriesForProgress.addAll(Arrays.asList(file));
+		}
+	}
+
+	public void dumpToLogStack() {
+		dumpToLogStack(-1);
+	}
+
+	public void dumpToLogStack(int buffer) {
+		int logStackSize = logStack.size();
+		logStackSize = logStackSize>maxBufferForLog?(maxBufferForLog):logStackSize;
+		if(logStackSize>maxBufferForLog){
+			logStack.subList(logStackSize-maxBufferForLog, logStackSize);
+			logStackSize = logStack.size();
+		}
+		
+		
+		buffer = (buffer == -1) ? logStackSize : buffer;
+		String logLine = null;
+		//System.out.println("logs pendientes: "+logStack.size());
+		while ((logLine = logStack.poll()) != null && buffer-- != 0) {
+			log(logLine);
+		}
+	}
+
+	public List<List<File>> extractCandidatesFiles() {
+		writeFinished = false;
+		int threadsToDeploy = 1;//Runtime.getRuntime().availableProcessors();
+		logStack.addLast("creating: " + threadsToDeploy + " threads..");
+		candidateGroup = splitListInSubList(listFiles, 100);
+		logStack.addLast("files to compare: "+listFiles.size());
+		logStack.addLast("subList size " + candidateGroup.size());
+		
+		updateProgress(candidateGroup.size(), 0);
+		logStack.addLast("linea 119 ");
+		LinkedList<FileCached> filesSelected = new LinkedList<FileCached>(this.filesSelected);
+		logStack.addLast("progress updated ");
+		
+		filesEqual = new ArrayList<List<FileCached>>();
+		LookUpThread lookUpThread;
+		LookUpThread.threadsAlive = threadsToDeploy;
+		logStack.addLast("theads deployed: "+LookUpThread.threadsAlive);
+		for (int i = 0; (i < threadsToDeploy) ; i++) {
+			lookUpThread = new LookUpThread(candidateGroup, filesEqual,filesSelected);
+			lookUpThread.setOnGroupThreadFinished(this);
+			lookUpThread.setName("Searcher_"+i);
+			lookUpThread.pickupFile();
+		}
+		// No finalizamos el metodo hasta que finalicen todos los threads
+		while (LookUpThread.threadsAlive != 0 || !writeFinished) {
+			try {
+				System.out.println("sleep 5s: "+LookUpThread.threadsAlive);
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		System.out.println("no more sleep");
+		
+		return null;
+	}
+
+	public List<FileCached> extractFileList() {
+		return listFiles;
 	}
 
 	/*
@@ -72,24 +162,65 @@ public class OperationManager implements ThreadManager {
 		return this.root;
 	}
 
-	public void writeFilesIntoFile(File path) throws IOException {
-		path = (path == null) ? new File("") : path;
-		File file = path;
-		System.out.println(file.getAbsolutePath());
-		file.createNewFile();
-		DataOutput output = new DataOutputStream(new FileOutputStream(file));
-		System.out.println("starting to write.. " + listFiles.size() + " files");
-		for (FileCached fileTmp : listFiles) {
-			output.writeUTF(fileTmp.getFile().getAbsolutePath());;
+	public List<FileCached> getFilesSelected() {
+		return filesSelected;
+	}
+
+	
+
+	private File[] getFolderInFile(File base) {
+		List<File> folders = new ArrayList<File>();
+		File filetmp;
+		for (String file : base.list()) {
+			filetmp = new File(base.getAbsolutePath() + File.separator + file);
+			if (filetmp.isDirectory())
+				folders.add(filetmp);
 		}
-		System.out.println("write finished..");
 		
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				JOptionPane.showMessageDialog(progressBar.getParent(), "Proccess finished successfull");
+		return folders.toArray(new File[0]);
+	}
+
+	public void initDialog(JProgressBar bar, JTextPane field) {
+		this.progressBar = bar;
+		this.log = field;
+	}
+	
+	
+	
+	public void log(String text) {
+		String textToShow = this.log.getText() + "\n" + text;
+		textToShow = textToShow.length()>2000?(textToShow.substring(textToShow.length()-2000,textToShow.length())):(textToShow);
+		this.log.setText(textToShow);
+	}
+	private void lookupFiles(String parent) {
+		File rootFile = new File(parent == null ? root : parent);
+		File initList[] = rootFile.listFiles();
+		// Collections.addAll(listFiles, initList);
+		for (File file : initList) {
+			if (!file.isDirectory()) {
+				listFiles.add(new FileCached(file));
 			}
-		});
+		}
+		File[] folders = getFolderInFile(rootFile);
+		addFolderForProgress(folders);
+		for (File file : folders) {
+			logStack.push("scanning folder: " + file.getAbsolutePath());
+			if (file.list() != null && file.list().length > 0) {
+				lookupFiles(file.getAbsolutePath());
+			}
+			if (directoriesForProgress.remove(file)) {
+				updateProgress(30,directoriesForProgress.size());
+			}
+		}
+	}
+	@Override
+	public synchronized void onGroupThreadFinished() {
+		/* System.out.println logStack.addLast("Thread " + Thread.currentThread().getName() + " finished");*/
+		System.out.println("validating threads alive: "+LookUpThread.threadsAlive+ " and write finish: "+writeFinished);
+		if (LookUpThread.threadsAlive == 0 && !writeFinished) {
+			writeOnFileGroups(filesEqual);
+			writeFinished = true;
+		}
 	}
 
 	public void readFilesIntoList(File path) throws IOException {
@@ -111,123 +242,6 @@ public class OperationManager implements ThreadManager {
 		} catch (EOFException e) {
 			/* System.out.println */log(listFiles.size() + " files read");
 		}
-	}
-
-	public void sortFilesBySizeAsc() {
-		System.out.println("Sorting file...");
-		
-		List<FileCached> filesCached = new ArrayList<>(listFiles.size());
-		
-		
-		
-/*		Comparator<File> comparator = new Comparator<File>() {
-			@Override
-			public int compare(File o1, File o2) {
-				return (int)(o1.length() - o2.length());
-			}
-		};*/
-		
-		System.out.println("antes de ordenar");
-		Collections.sort(listFiles);
-		
-		System.out.println("files sorted");
-	}
-
-	private <T> LinkedList<LinkedList<T>> splitListInSubList(List<T> sourceList, int pieces) {
-		LinkedList<LinkedList<T>> subLists = new LinkedList();
-		double sizeLists = Math.floor((double) sourceList.size() / pieces);
-		for (int i = 0; i < pieces; i++) {
-			LinkedList<T> subList = new LinkedList<T>();
-			for (int k = ((int) (i * sizeLists)); k < ((i + 1) * sizeLists); k++) {
-				subList.add(sourceList.get(k));
-			}
-			subLists.add(subList);
-		}
-		return subLists;
-	}
-
-	public List<List<File>> extractCandidatesFiles() {
-		writeFinished = false;
-		int threadsToDeploy = Runtime.getRuntime().availableProcessors();
-		logStack.addLast("creating: " + threadsToDeploy + " threads..");
-		candidateGroup = splitListInSubList(listFiles, 100);
-		logStack.addLast("files to compare: "+listFiles.size());
-		logStack.addLast("subList size " + candidateGroup.size());
-		
-		updateProgress(candidateGroup.size(), 0);
-		
-		
-		filesEqual = new ArrayList<List<FileCached>>();
-		LookUpThread lookUpThread;
-		LookUpThread.threadsAlive = threadsToDeploy;
-		logStack.addLast("theads deployed: "+LookUpThread.threadsAlive);
-		for (int i = 0; i < threadsToDeploy; i++) {
-			lookUpThread = new LookUpThread(candidateGroup, filesEqual);
-			lookUpThread.setOnGroupThreadFinished(this);
-			lookUpThread.setName("Searcher_"+i);
-			lookUpThread.pickupFile();
-		}
-		// No finalizamos el metodo hasta que finalicen todos los threads
-		while (LookUpThread.threadsAlive != 0 || !writeFinished) {
-			try {
-				System.out.println("sleep 5s: "+LookUpThread.threadsAlive);
-				Thread.sleep(5000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		System.out.println("no more sleep");
-		
-		return null;
-	}
-
-	@Override
-	public synchronized void onGroupThreadFinished() {
-		/* System.out.println logStack.addLast("Thread " + Thread.currentThread().getName() + " finished");*/
-		System.out.println("validating threads alive: "+LookUpThread.threadsAlive+ " and write finish: "+writeFinished);
-		if (LookUpThread.threadsAlive == 0 && !writeFinished) {
-			writeOnFileGroups(filesEqual);
-			writeFinished = true;
-		}
-	}
-
-	private void writeOnFileGroups(List<List<FileCached>> candidateGroup) {
-		logStack.addLast("preparing for saving results");
-		File file = this.dirSaveResult;
-		logStack.addLast("escribiendo..: " + file.getAbsolutePath());
-		BufferedWriter output = null;
-		try {
-			file.createNewFile();
-			output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
-			for (List<FileCached> list : candidateGroup) {
-				for (FileCached fileTmp : list) {
-					output.write(fileTmp.getFile().getAbsolutePath() + " : " + fileTmp.size);
-					output.newLine();
-				}
-				output.newLine();
-			}
-			logStack.addLast("Escritura finalizada");
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if (output != null) {
-					output.close();
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	private OperationManager() {
-		this.listFiles = new ArrayList();
-		this.logStack = new LinkedList<String>();
-		this.directoriesForProgress = new ArrayList<File>(30);
-	}
-
-	public List<FileCached> extractFileList() {
-		return listFiles;
 	}
 
 	public void scanNow(String parent, boolean append, SwingWorker worker) {
@@ -263,49 +277,62 @@ public class OperationManager implements ThreadManager {
 		this.isOpenProgressInfo = true;
 	}
 
-	private void lookupFiles(String parent) {
-		File rootFile = new File(parent == null ? root : parent);
-		File initList[] = rootFile.listFiles();
-		// Collections.addAll(listFiles, initList);
-		for (File file : initList) {
-			if (!file.isDirectory()) {
-				listFiles.add(new FileCached(file));
-			}
-		}
-		File[] folders = getFolderInFile(rootFile);
-		addFolderForProgress(folders);
-		for (File file : folders) {
-			logStack.push("scanning folder: " + file.getAbsolutePath());
-			if (file.list() != null && file.list().length > 0) {
-				lookupFiles(file.getAbsolutePath());
-			}
-			if (directoriesForProgress.remove(file)) {
-				updateProgress(30,directoriesForProgress.size());
-			}
-		}
+	public void setFilesSelected(List<FileCached> filesSelected) {
+		this.filesSelected = new LinkedList<FileCached>(filesSelected);
 	}
 
-	private File[] getFolderInFile(File base) {
-		List<File> folders = new ArrayList<File>();
-		File filetmp;
-		for (String file : base.list()) {
-			filetmp = new File(base.getAbsolutePath() + File.separator + file);
-			if (filetmp.isDirectory())
-				folders.add(filetmp);
-		}
+	
+	
+	public void setParameterCompare(File fileToSave,FileCached[] file) {
+		this.filesSelected = new LinkedList<FileCached>(Arrays.asList(file));
+		this.dirSaveResult = fileToSave;
+	}
+
+	
+	
+	public void setParameterScan(String baseDir, boolean appendToCurrent) {
+		root = baseDir;
+		this.appendToCurrent = appendToCurrent;
+	}
+
+	public void sortFilesBySizeAsc() {
+		System.out.println("Sorting file...");
 		
-		return folders.toArray(new File[0]);
+		List<FileCached> filesCached = new ArrayList<>(listFiles.size());
+		
+		
+		
+/*		Comparator<File> comparator = new Comparator<File>() {
+			@Override
+			public int compare(File o1, File o2) {
+				return (int)(o1.length() - o2.length());
+			}
+		};*/
+		
+		System.out.println("antes de ordenar");
+		Collections.sort(listFiles);
+		
+		System.out.println("files sorted");
 	}
 
-	public void log(String text) {
-		String textToShow = this.log.getText() + "\n" + text;
-		textToShow = textToShow.length()>2000?(textToShow.substring(textToShow.length()-2000,textToShow.length())):(textToShow);
-		this.log.setText(textToShow);
+	private <T> LinkedList<LinkedList<T>> splitListInSubList(List<T> sourceList, int pieces) {
+		LinkedList<LinkedList<T>> subLists = new LinkedList();
+		double sizeLists = Math.floor((double) sourceList.size() / pieces);
+		for (int i = 0; i < pieces; i++) {
+			LinkedList<T> subList = new LinkedList<T>();
+			for (int k = ((int) (i * sizeLists)); k < ((i + 1) * sizeLists); k++) {
+				subList.add(sourceList.get(k));
+			}
+			subLists.add(subList);
+		}
+		return subLists;
 	}
+	
+	
 
-	public void initDialog(JProgressBar bar, JTextPane field) {
-		this.progressBar = bar;
-		this.log = field;
+	public void updateProgress(int currentValue) {
+		updateProgress(maxValueProgressBar,currentValue);
+		
 	}
 
 	public void updateProgress(int maxValue,int currentValue) {
@@ -321,51 +348,53 @@ public class OperationManager implements ThreadManager {
 			}
 		});
 	}
-	
-	public void updateProgress(int currentValue) {
-		updateProgress(maxValueProgressBar,currentValue);
-		
-	}
 
-	
-	
-	public void dumpToLogStack(int buffer) {
-		int logStackSize = logStack.size();
-		logStackSize = logStackSize>maxBufferForLog?(maxBufferForLog):logStackSize;
-		if(logStackSize>maxBufferForLog){
-			logStack.subList(logStackSize-maxBufferForLog, logStackSize);
-			logStackSize = logStack.size();
+	public void writeFilesIntoFile(File path) throws IOException {
+		path = (path == null) ? new File("") : path;
+		File file = path;
+		System.out.println(file.getAbsolutePath());
+		file.createNewFile();
+		DataOutput output = new DataOutputStream(new FileOutputStream(file));
+		System.out.println("starting to write.. " + listFiles.size() + " files");
+		for (FileCached fileTmp : listFiles) {
+			output.writeUTF(fileTmp.getFile().getAbsolutePath());;
 		}
+		System.out.println("write finished..");
 		
-		
-		buffer = (buffer == -1) ? logStackSize : buffer;
-		String logLine = null;
-		//System.out.println("logs pendientes: "+logStack.size());
-		while ((logLine = logStack.poll()) != null && buffer-- != 0) {
-			log(logLine);
-		}
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				JOptionPane.showMessageDialog(progressBar.getParent(), "Proccess finished successfull");
+			}
+		});
 	}
 
-	public void dumpToLogStack() {
-		dumpToLogStack(-1);
-	}
-
-	public void setParameterScan(String baseDir, boolean appendToCurrent) {
-		root = baseDir;
-		this.appendToCurrent = appendToCurrent;
-	}
-
-	public void setParameterCompare(File fileToSave) {
-		this.dirSaveResult = fileToSave;
-	}
-
-	private void addFolderForProgress(File[] file) {
-		if (this.directoriesForProgress.size() >= 30) {
-			directoriesForProgress = directoriesForProgress.subList(0, 30);
-			this.isOpenProgressInfo = false;
-		}
-		if (isOpenProgressInfo) {
-			this.directoriesForProgress.addAll(Arrays.asList(file));
+	private void writeOnFileGroups(List<List<FileCached>> candidateGroup) {
+		logStack.addLast("preparing for saving results");
+		File file = this.dirSaveResult;
+		logStack.addLast("escribiendo..: " + file.getAbsolutePath());
+		BufferedWriter output = null;
+		try {
+			file.createNewFile();
+			output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
+			for (List<FileCached> list : candidateGroup) {
+				for (FileCached fileTmp : list) {
+					output.write(fileTmp.getFile().getAbsolutePath() + " : " + fileTmp.size);
+					output.newLine();
+				}
+				output.newLine();
+			}
+			logStack.addLast("Escritura finalizada");
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (output != null) {
+					output.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }

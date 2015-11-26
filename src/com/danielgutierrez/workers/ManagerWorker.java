@@ -1,5 +1,6 @@
 package com.danielgutierrez.workers;
 
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.SwingWorker;
 import com.danielgutierrez.UI.MainFrame;
@@ -24,30 +25,16 @@ public class ManagerWorker<T, V> extends SwingWorker<Object,Object> {
 	protected T doInBackground() throws Exception {
 		switch (operationToDo) {
 		case OPERATION_SCAN:
-//			new Thread(new Runnable() {
-//				@Override
-//				public void run() {
-//					while(flagWriteLog){
-//						publish(new Object());
-//						try {
-//							Thread.sleep(3000);
-//						} catch (InterruptedException e) {}	
-//					}
-//					
-//				}
-//			}).start();
-			/*tr.setPriority(Thread.MAX_PRIORITY);
-			tr.start();*/
-			manager.scanNow(manager.getBaseDir(), false,this);
-			
-			//tr.interrupt();
+			manager.scanNow(manager.getBaseDir(), false, this);
 			break;
 		case OPERATION_COMPARE:
+			if (manager.getFilesSelected() != null) {
+				manager.addFilesFromSelected(manager.getFilesSelected());
+			}
 			manager.extractCandidatesFiles();
 			System.out.println("turning off the log");
 			LogWorker.turnoffLogFlag();
 			break;
-
 		default:
 			break;
 		}

@@ -4,6 +4,7 @@ import java.awt.EventQueue;
 import java.awt.FileDialog;
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.TransferHandler;
@@ -17,6 +18,8 @@ import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -26,6 +29,8 @@ import javax.swing.JButton;
 import javax.swing.SwingConstants;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.ScrollPaneConstants;
+import com.danielgutierrez.filesLookUp.FileCached;
 
 public class FileChooserDialog extends JPanel{
 	private JTable table;
@@ -51,6 +56,19 @@ public class FileChooserDialog extends JPanel{
 	 */
 	public FileChooserDialog() {
 		initialize();
+	}
+	
+	public FileCached[] getAllFilesAdded(){
+		DefaultTableModel defaultTableModel =  (DefaultTableModel)table.getModel();
+		int rows = defaultTableModel.getRowCount();
+		if(rows == 0)
+			return null;
+		
+		FileCached[] files = new FileCached[rows];
+		for(int i= 0 ; i<rows;i++){
+			files[i] = new FileCached((String)defaultTableModel.getValueAt(i, 0));
+		}
+		return files;
 	}
 
 	/**
@@ -81,17 +99,22 @@ public class FileChooserDialog extends JPanel{
 		panel.setLayout(new BorderLayout(0, 0));
 		
 		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		panel.add(scrollPane, BorderLayout.CENTER);
 		
 		//JPanel tableContainer = new JPanel();
 		//tableContainer.setLayout(new BorderLayout(0, 0));
 		
 		table = new JTable();
-		scrollPane.add(table);
+		table.setFillsViewportHeight(true);
+		scrollPane.setViewportView(table);
+		
 		//panel.add(table, BorderLayout.NORTH);
 		//panel.add(table, BorderLayout.SOUTH);
 		table.setModel(new DefaultTableModel(
-				new String[]{new String[]{"file"},
+			null,
+			
 			new String[] {
 				"Archivo"
 			}
@@ -110,6 +133,26 @@ public class FileChooserDialog extends JPanel{
 		});
 		
 		JButton btnSelectFiles = new JButton("Select Files");
+		
+		btnSelectFiles.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+				JFileChooser fc = new JFileChooser();
+				fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+				int returnVal = fc.showOpenDialog(table.getParent());
+				 if (returnVal == JFileChooser.APPROVE_OPTION) {
+			            File file = fc.getSelectedFile();
+			            
+			            
+			            DefaultTableModel model = (DefaultTableModel)table.getModel(); 
+			            	if(!file.isDirectory() && ! FileChooserDialog.this.fileAlreadyAddes(model,file))
+			            		model.insertRow(model.getRowCount(),new Object[]{file.getAbsolutePath(),""});
+			            
+			        }
+			}
+			
+		});
+		
 		add(btnSelectFiles, BorderLayout.SOUTH);
 	}
 	
@@ -139,7 +182,10 @@ public class FileChooserDialog extends JPanel{
 		            try {
 		                data = (List<File>)t.getTransferData(DataFlavor.javaFileListFlavor);
 		            } 
-		            catch (Exception e) { return false; }
+		            catch (Exception e) {
+		            	e.printStackTrace();
+		            	return false; 
+		            	}
 		            DefaultTableModel model = (DefaultTableModel)tableModel; 
 		            for (File file : data) {
 		            	if(!file.isDirectory() && !fileAlreadyAddes(model,file))
@@ -151,16 +197,17 @@ public class FileChooserDialog extends JPanel{
 		        private void displayDropLocation(String string) {
 		            System.out.println(string);
 		        }
-		        private boolean fileAlreadyAddes(DefaultTableModel model, File file){
-		        	for(Object fileAdded : model.getDataVector()){
-		        		if(((Vector)fileAdded).get(0).equals(file.getAbsolutePath())){
-		        			return true;
-		        		}
-		        	}
-		        	return false;
-		        }
+		        
 		    };
 			
 		}
-	
+	@SuppressWarnings("rawtypes")
+	private boolean fileAlreadyAddes(DefaultTableModel model, File file){
+    	for(Object fileAdded : model.getDataVector()){
+    		if(((Vector)fileAdded).get(0).equals(file.getAbsolutePath())){
+    			return true;
+    		}
+    	}
+    	return false;
+    }
 }

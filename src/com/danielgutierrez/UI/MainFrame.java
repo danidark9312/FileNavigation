@@ -3,6 +3,7 @@ package com.danielgutierrez.UI;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Event;
 import java.awt.EventQueue;
 import java.awt.FileDialog;
 import java.awt.Graphics;
@@ -29,11 +30,17 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.BevelBorder;
 import sun.font.CreatedFontTracker;
+import com.danielgutierrez.filesLookUp.FileCached;
 import com.danielgutierrez.filesLookUp.OperationManager;
 import com.danielgutierrez.workers.LogWorker;
 import com.danielgutierrez.workers.ManagerWorker;
 import java.awt.FlowLayout;
 import javax.swing.SwingConstants;
+import javax.swing.JCheckBox;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.ItemEvent;
 
 public class MainFrame {
 	private static final String version = "SimFile V1.0 Alpha";
@@ -47,6 +54,8 @@ public class MainFrame {
 	public static JButton btnSearchSimilarFiles;
 	private static ModalMessage modalMessage;
 	public static JLabel lblFiles;
+	
+	private static FileChooserDialog chooserDialog;
 
 	/**
 	 * Launch the application.
@@ -86,10 +95,17 @@ public class MainFrame {
 	}
 	
 	private void scanAction(){
+		FileCached filesSelected[] = chooserDialog.getAllFilesAdded();
+		if(chooserDialog.isVisible() && filesSelected!=null
+				|| !chooserDialog.isVisible()
+				){
 			manager.setParameterScan(baseDir.getAbsolutePath(), false);
 			LogWorker.turnonLogFlag();
 			new LogWorker(manager).execute();
 			new ManagerWorker(manager, ManagerWorker.OPERATION_SCAN).execute();
+		}else{
+			showDialog("You must add at least one file to be scanned");
+		}
 	}
 	
 	private void saveResultAction(){
@@ -112,7 +128,8 @@ public class MainFrame {
 		fd.setFile("scan.dup");
 		fd.setVisible(true);
 		if(fd.getFile()!=null){
-			manager.setParameterCompare(new File(fd.getFile()));
+			FileCached filesSelected[] = chooserDialog.getAllFilesAdded();
+			manager.setParameterCompare(new File(fd.getFile()),filesSelected);
 			LogWorker.turnonLogFlag();
 			new LogWorker(manager).execute();
 			new ManagerWorker(manager, ManagerWorker.OPERATION_COMPARE).execute();
@@ -140,6 +157,21 @@ public class MainFrame {
 	 * Initialize the contents of the frame.
 	 */
 	
+	private void validateChangeCheckBox(ActionEvent changeEvent){
+		JCheckBox box = (JCheckBox)changeEvent.getSource();
+		if(box.isSelected()){
+			
+			if((showConfirmDialog(frame,"Matching all file may take too much time, you should select a base file directory carefully, do you want to continue ?","Warning!") != JOptionPane.YES_OPTION)){
+				((JCheckBox)changeEvent.getSource()).setSelected(false);
+				chooserDialog.setVisible(true);
+			}else{
+				chooserDialog.setVisible(false);
+			}
+		}else{
+			chooserDialog.setVisible(true);
+		}
+	}
+	
 	private void initialize() {
 		manager = OperationManager.getInstance();
 		modalMessage = new ModalMessage(frame, "");
@@ -164,23 +196,20 @@ public class MainFrame {
 		JPanel pnlButtonsTool = new JPanel();
 		configPanel.add(pnlButtonsTool, BorderLayout.WEST);
 		pnlButtonsTool.setBorder(new BevelBorder(BevelBorder.RAISED, null, null, null, null));
-		pnlButtonsTool.setLayout(new GridLayout(10, 1, 0, 0));
+		GridBagLayout gbl_pnlButtonsTool = new GridBagLayout();
+		gbl_pnlButtonsTool.columnWidths = new int[]{121, 0};
+		gbl_pnlButtonsTool.rowHeights = new int[]{17, 17, 17, 17, 17, 0, 0};
+		gbl_pnlButtonsTool.columnWeights = new double[]{0.0, Double.MIN_VALUE};
+		gbl_pnlButtonsTool.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		pnlButtonsTool.setLayout(gbl_pnlButtonsTool);
 		
-		btnScanDisk = new JButton("Scan Disk");
-		btnScanDisk.setEnabled(false);
-		btnScanDisk.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				scanAction();
+		btnSearchSimilarFiles = new JButton("Search Similar");
+		btnSearchSimilarFiles.setEnabled(false);
+		btnSearchSimilarFiles.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				compareSimilarAction();
 			}
 		});
-		JButton btnSelectBaseFolder = new JButton("Select Base Folder");
-		btnSelectBaseFolder.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				selectBaseDirectoryAction();
-			}
-		});
-		pnlButtonsTool.add(btnSelectBaseFolder);
-		pnlButtonsTool.add(btnScanDisk);
 		
 		btnSaveResult = new JButton("Save Scan");
 		btnSaveResult.setEnabled(false);
@@ -189,7 +218,38 @@ public class MainFrame {
 			saveResultAction();
 			}
 		});
-		pnlButtonsTool.add(btnSaveResult);
+		JButton btnSelectBaseFolder = new JButton("Select Base Folder");
+		btnSelectBaseFolder.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				selectBaseDirectoryAction();
+			}
+		});
+		GridBagConstraints gbc_btnSelectBaseFolder = new GridBagConstraints();
+		gbc_btnSelectBaseFolder.fill = GridBagConstraints.BOTH;
+		gbc_btnSelectBaseFolder.insets = new Insets(0, 0, 5, 0);
+		gbc_btnSelectBaseFolder.gridx = 0;
+		gbc_btnSelectBaseFolder.gridy = 0;
+		pnlButtonsTool.add(btnSelectBaseFolder, gbc_btnSelectBaseFolder);
+		
+		btnScanDisk = new JButton("Scan Disk");
+		btnScanDisk.setEnabled(false);
+		btnScanDisk.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				scanAction();
+			}
+		});
+		GridBagConstraints gbc_btnScanDisk = new GridBagConstraints();
+		gbc_btnScanDisk.fill = GridBagConstraints.BOTH;
+		gbc_btnScanDisk.insets = new Insets(0, 0, 5, 0);
+		gbc_btnScanDisk.gridx = 0;
+		gbc_btnScanDisk.gridy = 1;
+		pnlButtonsTool.add(btnScanDisk, gbc_btnScanDisk);
+		GridBagConstraints gbc_btnSaveResult = new GridBagConstraints();
+		gbc_btnSaveResult.fill = GridBagConstraints.BOTH;
+		gbc_btnSaveResult.insets = new Insets(0, 0, 5, 0);
+		gbc_btnSaveResult.gridx = 0;
+		gbc_btnSaveResult.gridy = 2;
+		pnlButtonsTool.add(btnSaveResult, gbc_btnSaveResult);
 		
 		JButton btnLoadScan = new JButton("Load Scan");
 		btnLoadScan.addActionListener(new ActionListener() {
@@ -199,16 +259,31 @@ public class MainFrame {
 			}
 		
 		});
-		pnlButtonsTool.add(btnLoadScan);
+		GridBagConstraints gbc_btnLoadScan = new GridBagConstraints();
+		gbc_btnLoadScan.fill = GridBagConstraints.BOTH;
+		gbc_btnLoadScan.insets = new Insets(0, 0, 5, 0);
+		gbc_btnLoadScan.gridx = 0;
+		gbc_btnLoadScan.gridy = 3;
+		pnlButtonsTool.add(btnLoadScan, gbc_btnLoadScan);
+		GridBagConstraints gbc_btnSearchSimilarFiles = new GridBagConstraints();
+		gbc_btnSearchSimilarFiles.insets = new Insets(0, 0, 5, 0);
+		gbc_btnSearchSimilarFiles.fill = GridBagConstraints.BOTH;
+		gbc_btnSearchSimilarFiles.gridx = 0;
+		gbc_btnSearchSimilarFiles.gridy = 4;
+		pnlButtonsTool.add(btnSearchSimilarFiles, gbc_btnSearchSimilarFiles);
 		
-		btnSearchSimilarFiles = new JButton("Search Similar");
-		btnSearchSimilarFiles.setEnabled(false);
-		btnSearchSimilarFiles.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				compareSimilarAction();
+		JCheckBox chckbxFindAll = new JCheckBox("Find all files");
+		chckbxFindAll.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				validateChangeCheckBox(e);
 			}
 		});
-		pnlButtonsTool.add(btnSearchSimilarFiles);
+			
+		GridBagConstraints gbc_chckbxFindAllFiles = new GridBagConstraints();
+		gbc_chckbxFindAllFiles.gridx = 0;
+		gbc_chckbxFindAllFiles.gridy = 5;
+		pnlButtonsTool.add(chckbxFindAll, gbc_chckbxFindAllFiles);
 		
 		
 		JLabel lblSimfileV = new JLabel(version);
@@ -316,9 +391,10 @@ public class MainFrame {
 		manager.initDialog(progressBar,txtPane);
 		
 		
-		FileChooserDialog dialog = new FileChooserDialog();
-		filePanel.add(dialog);
-		dialog.setVisible(true);
+		chooserDialog = new FileChooserDialog();
+		filePanel.add(chooserDialog);
+		chooserDialog.setVisible(true);
+		
 	}
 	
 	public static void showDialog(String text){
@@ -327,5 +403,16 @@ public class MainFrame {
 	public static void hideDialog(){
 		modalMessage.hideDialog();
 	}
-
+	
+	public static int showConfirmDialog(Component component,String message,String tittle){
+		int res = JOptionPane.showOptionDialog(component, 
+		        message, 
+		        tittle, 
+		        JOptionPane.YES_NO_OPTION, 
+		        JOptionPane.INFORMATION_MESSAGE, 
+		        null, 
+		        new String[]{"Yes", "No"}, // this is the array
+		        "default");
+		return res;
+	}
 }

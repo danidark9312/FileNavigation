@@ -5,11 +5,11 @@ import java.io.File;
 public class FileCached implements Comparable<FileCached>{
 	File file;
 	long size;
-	FileCached(File file){
+	public FileCached(File file){
 		this.file = file;
 		this.size = file.length();}
 	
-	FileCached(String filePath){
+	public FileCached(String filePath){
 		this(new File(filePath));
 	}
 	public File getFile(){
