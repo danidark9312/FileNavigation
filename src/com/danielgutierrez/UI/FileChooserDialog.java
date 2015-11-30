@@ -58,6 +58,15 @@ public class FileChooserDialog extends JPanel{
 		initialize();
 	}
 	
+	
+	public void cleanAllElementsInTable(){
+		DefaultTableModel defaultTableModel =  (DefaultTableModel)table.getModel();
+		int i = 0;
+		while(i<defaultTableModel.getRowCount()){
+			defaultTableModel.removeRow(0);
+		}
+	}
+	
 	public FileCached[] getAllFilesAdded(){
 		DefaultTableModel defaultTableModel =  (DefaultTableModel)table.getModel();
 		int rows = defaultTableModel.getRowCount();

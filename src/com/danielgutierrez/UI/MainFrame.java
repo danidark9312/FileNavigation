@@ -1,12 +1,11 @@
+
 package com.danielgutierrez.UI;
 
+
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.Event;
 import java.awt.EventQueue;
 import java.awt.FileDialog;
-import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -15,9 +14,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import javax.swing.Icon;
+
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -27,41 +27,35 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.BevelBorder;
+
+import sun.text.normalizer.UProperty;
+
 import com.danielgutierrez.filesLookUp.FileCached;
 import com.danielgutierrez.filesLookUp.OperationManager;
 import com.danielgutierrez.workers.LogWorker;
 import com.danielgutierrez.workers.ManagerWorker;
-import java.awt.FlowLayout;
-import javax.swing.SwingConstants;
-import javax.swing.JCheckBox;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.ItemEvent;
 
-public class MainFrame {
+public class MainFrame{
+
+	private JPanel filePanel;
 	private static final String version = "SimFile V1.0 Alpha";
-	private JLabel lblBaseFolder;
-	private JFrame frame;
-	private OperationManager manager;
-	private File baseDir;
-	private JTextPane txtPane;
-	private JButton btnScanDisk;
 	public static JButton btnSaveResult;
 	public static JButton btnSearchSimilarFiles;
 	private static ModalMessage modalMessage;
 	public static JLabel lblFiles;
-	
 	private static FileChooserDialog chooserDialog;
+
+	public static void hideDialog() {
+		modalMessage.hideDialog();
+	}
 
 	/**
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
-		
-		EventQueue.invokeLater(new Runnable() {
+		EventQueue.invokeLater(new Runnable(){
+
 			public void run() {
 				try {
 					MainFrame window = new MainFrame();
@@ -73,152 +67,87 @@ public class MainFrame {
 		});
 	}
 
+	public static int showConfirmDialog(Component component, String message, String tittle) {
+		int res = JOptionPane.showOptionDialog(component, message, tittle, JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, null, new String[] {
+				"Yes", "No" }, // this is the array
+				"default");
+		return res;
+	}
+
+	public static void showDialog(String text) {
+		modalMessage.showDialog(text);
+	}
+
+	private JLabel lblBaseFolder;
+	private JFrame frame;
+	private OperationManager manager;
+	private File baseDir;
+	private JTextPane txtPane;
+	private JButton btnScanDisk;
+
 	/**
 	 * Create the application.
 	 */
-	public MainFrame() {
+	public MainFrame(){
 		initialize();
 	}
 
-	private void selectBaseDirectoryAction(){
-		JFileChooser fc = new JFileChooser();
-		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		int returnVal = fc.showOpenDialog(frame);
-		 if (returnVal == JFileChooser.APPROVE_OPTION) {
-	            File file = fc.getSelectedFile();
-	            btnScanDisk.setEnabled(true);
-	            //This is where a real application would open the file.
-	            lblBaseFolder.setText(file.getAbsolutePath());
-	            baseDir = file;
-	        }
-	}
-	
-	private void scanAction(){
-		FileCached filesSelected[] = chooserDialog.getAllFilesAdded();
-		if(chooserDialog.isVisible() && filesSelected!=null
-				|| !chooserDialog.isVisible()
-				){
-			manager.setParameterScan(baseDir.getAbsolutePath(), false);
-			LogWorker.turnonLogFlag();
-			new LogWorker(manager).execute();
-			new ManagerWorker(manager, ManagerWorker.OPERATION_SCAN).execute();
-		}else{
-			showDialog("You must add at least one file to be scanned");
-		}
-	}
-	
-	private void saveResultAction(){
-		FileDialog fd = new FileDialog(frame, "Choose a file", FileDialog.SAVE);
-		fd.setFile("scan.res");
-		fd.setVisible(true);
-		if(fd.getFile()!=null)
-			try {
-				OperationManager.getInstance().writeFilesIntoFile(new File(fd.getFile()));
-				JOptionPane.showMessageDialog(frame, "Saved Successfull");
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-	}
-	
-	
-	private void compareSimilarAction(){
-		
+	private void compareSimilarAction() {
 		FileDialog fd = new FileDialog(frame, "Save Result", FileDialog.SAVE);
 		fd.setFile("scan.dup");
 		fd.setVisible(true);
-		if(fd.getFile()!=null){
+		if (fd.getFile() != null) {
 			FileCached filesSelected[] = chooserDialog.getAllFilesAdded();
-			manager.setParameterCompare(new File(fd.getFile()),filesSelected);
+			manager.setParameterCompare(new File(fd.getFile()), filesSelected);
 			LogWorker.turnonLogFlag();
 			new LogWorker(manager).execute();
 			new ManagerWorker(manager, ManagerWorker.OPERATION_COMPARE).execute();
-			
 		}
 	}
-	
-	private void loadScanAction(){
-		
-		FileDialog fd = new FileDialog(frame, "Choose a file", FileDialog.LOAD);
-				fd.setFile("scan.res");
-	            fd.setVisible(true);
-	            String file = fd.getFile();
-	            if(file!=null){
-	            try {
-					manager.readFilesIntoList(new File(file));
-				} catch (IOException e1) {
-					JOptionPane.showMessageDialog(frame, "No se encuentra el archivo");
-				}
-	        }
-	
-	}
-	
-	/**
-	 * Initialize the contents of the frame.
-	 */
-	
-	private void validateChangeCheckBox(ActionEvent changeEvent){
-		JCheckBox box = (JCheckBox)changeEvent.getSource();
-		if(box.isSelected()){
-			
-			if((showConfirmDialog(frame,"Matching all file may take too much time, you should select a base file directory carefully, do you want to continue ?","Warning!") != JOptionPane.YES_OPTION)){
-				((JCheckBox)changeEvent.getSource()).setSelected(false);
-				chooserDialog.setVisible(true);
-			}else{
-				chooserDialog.setVisible(false);
-			}
-		}else{
-			chooserDialog.setVisible(true);
-		}
-	}
-	
+
 	private void initialize() {
 		manager = OperationManager.getInstance();
 		modalMessage = new ModalMessage(frame, "");
-		
 		frame = new JFrame();
 		frame.setBounds(100, 100, 558, 394);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
-		
-			try {
-				UIManager.setLookAndFeel(
-					     "com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
+		try {
+			UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
 		frame.getContentPane().setLayout(new GridLayout(0, 1, 0, 0));
-		
 		JPanel configPanel = new JPanel();
 		frame.getContentPane().add(configPanel);
 		configPanel.setLayout(new BorderLayout(0, 0));
-		
 		JPanel pnlButtonsTool = new JPanel();
 		configPanel.add(pnlButtonsTool, BorderLayout.WEST);
 		pnlButtonsTool.setBorder(new BevelBorder(BevelBorder.RAISED, null, null, null, null));
 		GridBagLayout gbl_pnlButtonsTool = new GridBagLayout();
-		gbl_pnlButtonsTool.columnWidths = new int[]{121, 0};
-		gbl_pnlButtonsTool.rowHeights = new int[]{17, 17, 17, 17, 17, 0, 0};
-		gbl_pnlButtonsTool.columnWeights = new double[]{0.0, Double.MIN_VALUE};
-		gbl_pnlButtonsTool.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_pnlButtonsTool.columnWidths = new int[] { 121, 0 };
+		gbl_pnlButtonsTool.rowHeights = new int[] { 17, 17, 17, 17, 17, 0, 0 };
+		gbl_pnlButtonsTool.columnWeights = new double[] { 0.0, Double.MIN_VALUE };
+		gbl_pnlButtonsTool.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
 		pnlButtonsTool.setLayout(gbl_pnlButtonsTool);
-		
 		btnSearchSimilarFiles = new JButton("Search Similar");
 		btnSearchSimilarFiles.setEnabled(false);
-		btnSearchSimilarFiles.addActionListener(new ActionListener() {
+		btnSearchSimilarFiles.addActionListener(new ActionListener(){
+
 			public void actionPerformed(ActionEvent arg0) {
 				compareSimilarAction();
 			}
 		});
-		
 		btnSaveResult = new JButton("Save Scan");
 		btnSaveResult.setEnabled(false);
-		btnSaveResult.addActionListener(new ActionListener() {
+		btnSaveResult.addActionListener(new ActionListener(){
+
 			public void actionPerformed(ActionEvent arg0) {
-			saveResultAction();
+				saveResultAction();
 			}
 		});
 		JButton btnSelectBaseFolder = new JButton("Select Base Folder");
-		btnSelectBaseFolder.addActionListener(new ActionListener() {
+		btnSelectBaseFolder.addActionListener(new ActionListener(){
+
 			public void actionPerformed(ActionEvent e) {
 				selectBaseDirectoryAction();
 			}
@@ -229,10 +158,10 @@ public class MainFrame {
 		gbc_btnSelectBaseFolder.gridx = 0;
 		gbc_btnSelectBaseFolder.gridy = 0;
 		pnlButtonsTool.add(btnSelectBaseFolder, gbc_btnSelectBaseFolder);
-		
 		btnScanDisk = new JButton("Scan Disk");
 		btnScanDisk.setEnabled(false);
-		btnScanDisk.addActionListener(new ActionListener() {
+		btnScanDisk.addActionListener(new ActionListener(){
+
 			public void actionPerformed(ActionEvent e) {
 				scanAction();
 			}
@@ -249,14 +178,12 @@ public class MainFrame {
 		gbc_btnSaveResult.gridx = 0;
 		gbc_btnSaveResult.gridy = 2;
 		pnlButtonsTool.add(btnSaveResult, gbc_btnSaveResult);
-		
 		JButton btnLoadScan = new JButton("Load Scan");
-		btnLoadScan.addActionListener(new ActionListener() {
+		btnLoadScan.addActionListener(new ActionListener(){
 
 			public void actionPerformed(ActionEvent e) {
 				loadScanAction();
 			}
-		
 		});
 		GridBagConstraints gbc_btnLoadScan = new GridBagConstraints();
 		gbc_btnLoadScan.fill = GridBagConstraints.BOTH;
@@ -270,46 +197,38 @@ public class MainFrame {
 		gbc_btnSearchSimilarFiles.gridx = 0;
 		gbc_btnSearchSimilarFiles.gridy = 4;
 		pnlButtonsTool.add(btnSearchSimilarFiles, gbc_btnSearchSimilarFiles);
-		
 		JCheckBox chckbxFindAll = new JCheckBox("Find all files");
-		chckbxFindAll.addActionListener(new ActionListener() {
+		chckbxFindAll.addActionListener(new ActionListener(){
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				validateChangeCheckBox(e);
 			}
 		});
-			
 		GridBagConstraints gbc_chckbxFindAllFiles = new GridBagConstraints();
 		gbc_chckbxFindAllFiles.gridx = 0;
 		gbc_chckbxFindAllFiles.gridy = 5;
 		pnlButtonsTool.add(chckbxFindAll, gbc_chckbxFindAllFiles);
-		
-		
 		JLabel lblSimfileV = new JLabel(version);
 		configPanel.add(lblSimfileV);
-		
 		JPanel pnlScrollContainer = new JPanel();
 		configPanel.add(pnlScrollContainer);
 		pnlScrollContainer.setLayout(new BorderLayout(0, 0));
-		
 		JScrollPane scrollPane = new JScrollPane();
 		pnlScrollContainer.add(scrollPane);
-		
 		txtPane = new JTextPane();
 		txtPane.setEditable(false);
 		scrollPane.setViewportView(txtPane);
-		
 		JPanel panel = new JPanel();
 		pnlScrollContainer.add(panel, BorderLayout.NORTH);
 		panel.setBorder(new BevelBorder(BevelBorder.RAISED, null, null, null, null));
 		GridBagLayout gbl_panel = new GridBagLayout();
-		gbl_panel.columnWidths = new int[] {100, 100, 149};
-		gbl_panel.rowHeights = new int[] {30, 16};
-		gbl_panel.columnWeights = new double[]{0.0, 0.0, 1.0};
-		gbl_panel.rowWeights = new double[]{0.0, 1.0};
+		gbl_panel.columnWidths = new int[] { 100, 100, 149 };
+		gbl_panel.rowHeights = new int[] { 30, 16 };
+		gbl_panel.columnWeights = new double[] { 0.0, 0.0, 1.0 };
+		gbl_panel.rowWeights = new double[] { 0.0, 1.0 };
 		panel.setLayout(gbl_panel);
-		
-		//lblBaseFolder = new JLabel("Folder Selected:");
+		// lblBaseFolder = new JLabel("Folder Selected:");
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.weightx = 0.5;
 		gbc.gridwidth = 0;
@@ -320,7 +239,6 @@ public class MainFrame {
 		gbc.gridy = 0;
 		JLabel label = new JLabel("Folder Selected:");
 		panel.add(label, gbc);
-		
 		lblBaseFolder = new JLabel("none");
 		GridBagConstraints gbc_lblBaseFolder = new GridBagConstraints();
 		gbc_lblBaseFolder.weightx = 0.5;
@@ -331,7 +249,6 @@ public class MainFrame {
 		gbc_lblBaseFolder.gridx = 1;
 		gbc_lblBaseFolder.gridy = 0;
 		panel.add(lblBaseFolder, gbc_lblBaseFolder);
-		
 		JPanel panel_1 = new JPanel();
 		GridBagConstraints gbc_panel_1 = new GridBagConstraints();
 		gbc_panel_1.anchor = GridBagConstraints.EAST;
@@ -342,16 +259,15 @@ public class MainFrame {
 		gbc_panel_1.gridy = 0;
 		panel.add(panel_1, gbc_panel_1);
 		panel_1.setLayout(new BorderLayout(5, 5));
-		
 		JButton btnNewButton = new JButton("");
-		btnNewButton.addActionListener(new ActionListener() {
+		btnNewButton.addActionListener(new ActionListener(){
+
 			public void actionPerformed(ActionEvent e) {
 				txtPane.setText("");
 			}
 		});
 		btnNewButton.setIcon(new ImageIcon("D:\\DanielGutierrez\\Proyectos\\FileNavigation\\FileNavigation\\icons\\clearConsole2.png"));
 		panel_1.add(btnNewButton, BorderLayout.CENTER);
-		
 		JLabel lblFilesFound = new JLabel("Files Found:");
 		GridBagConstraints gbc_lblFilesFound = new GridBagConstraints();
 		gbc_lblFilesFound.weightx = 0.5;
@@ -362,7 +278,6 @@ public class MainFrame {
 		gbc_lblFilesFound.gridx = 0;
 		gbc_lblFilesFound.gridy = 1;
 		panel.add(lblFilesFound, gbc_lblFilesFound);
-		
 		lblFiles = new JLabel("0");
 		GridBagConstraints gbc_lblFiles = new GridBagConstraints();
 		gbc_lblFiles.weightx = 0.5;
@@ -373,45 +288,96 @@ public class MainFrame {
 		gbc_lblFiles.gridx = 1;
 		gbc_lblFiles.gridy = 1;
 		panel.add(lblFiles, gbc_lblFiles);
-		
-		JPanel filePanel = new JPanel();
+		filePanel = new JPanel();
 		frame.getContentPane().add(filePanel);
 		filePanel.setLayout(new BorderLayout(0, 0));
-		
-		
 		JProgressBar progressBar = new JProgressBar();
 		filePanel.add(progressBar, BorderLayout.NORTH);
-		//progressBar.setForeground(Color.blue);
-		//progressBar.setForeground(new Color(246, 156, 85));
+		// progressBar.setForeground(Color.blue);
+		// progressBar.setForeground(new Color(246, 156, 85));
 		progressBar.setValue(50);
 		progressBar.setStringPainted(true);
-		
-		
-		manager.initDialog(progressBar,txtPane);
-		
-		
+		manager.initDialog(progressBar, txtPane);
 		chooserDialog = new FileChooserDialog();
 		filePanel.add(chooserDialog);
 		chooserDialog.setVisible(true);
+	}
+
+	private void loadScanAction() {
+		FileDialog fd = new FileDialog(frame, "Choose a file", FileDialog.LOAD);
+		fd.setFile("scan.res");
+		fd.setVisible(true);
+		String file = fd.getFile();
+		if (file != null) {
+			try {
+				manager.readFilesIntoList(new File(file));
+			} catch (IOException e1) {
+				JOptionPane.showMessageDialog(frame, "No se encuentra el archivo");
+			}
+		}
+	}
+
+	private void saveResultAction() {
+		FileDialog fd = new FileDialog(frame, "Choose a file", FileDialog.SAVE);
+		fd.setFile("scan.res");
+		fd.setVisible(true);
+		if (fd.getFile() != null)
+			try {
+				OperationManager.getInstance().writeFilesIntoFile(new File(fd.getFile()));
+				JOptionPane.showMessageDialog(frame, "Saved Successfull");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+	}
+
+	private void scanAction() {
+		FileCached filesSelected[] = chooserDialog.getAllFilesAdded();
+		if (chooserDialog.isVisible() && filesSelected != null || !chooserDialog.isVisible()) {
+			manager.setParameterScan(baseDir.getAbsolutePath(), false);
+			LogWorker.turnonLogFlag();
+			new LogWorker(manager).execute();
+			new ManagerWorker(manager, ManagerWorker.OPERATION_SCAN).execute();
+		} else {
+			showDialog("You must add at least one file to be scanned");
+		}
+	}
+
+	private void selectBaseDirectoryAction() {
+		JFileChooser fc = new JFileChooser();
+		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		int returnVal = fc.showOpenDialog(frame);
+		if (returnVal == JFileChooser.APPROVE_OPTION) {
+			File file = fc.getSelectedFile();
+			btnScanDisk.setEnabled(true);
+			// This is where a real application would open the file.
+			lblBaseFolder.setText(file.getAbsolutePath());
+			baseDir = file;
+		}
+	}
+
+	/**
+	 * Initialize the contents of the frame.
+	 */
+	private void validateChangeCheckBox(ActionEvent changeEvent) {
+		JCheckBox box = (JCheckBox) changeEvent.getSource();
+		if (box.isSelected()) {
+			if ((showConfirmDialog(frame,
+					"Matching all file may take too much time, you should select a base file directory carefully, do you want to continue ?", "Warning!") != JOptionPane.YES_OPTION)) {
+				((JCheckBox) changeEvent.getSource()).setSelected(false);
+				frame.getContentPane().add(filePanel);
+				//chooserDialog.setVisible(true);
+			} else {
+				//chooserDialog.setVisible(false);
+				frame.getContentPane().remove(filePanel);
+				chooserDialog.cleanAllElementsInTable();
+			}
+		} else {
+			frame.getContentPane().add(filePanel);
+			//chooserDialog.setVisible(true);
+		}
 		
+		frame.repaint();
 	}
 	
-	public static void showDialog(String text){
-		modalMessage.showDialog(text);
-	}
-	public static void hideDialog(){
-		modalMessage.hideDialog();
-	}
-	
-	public static int showConfirmDialog(Component component,String message,String tittle){
-		int res = JOptionPane.showOptionDialog(component, 
-		        message, 
-		        tittle, 
-		        JOptionPane.YES_NO_OPTION, 
-		        JOptionPane.INFORMATION_MESSAGE, 
-		        null, 
-		        new String[]{"Yes", "No"}, // this is the array
-		        "default");
-		return res;
-	}
 }
+

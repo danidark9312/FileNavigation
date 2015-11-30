@@ -54,10 +54,14 @@ public class LookUpThread implements Runnable{
 		
 			List<FileCached> equals = new ArrayList<FileCached>();
 			equals.add(fileCached);
-			
-			for(int i=0;i<candidates.size();i++){
-				List<FileCached> files = candidates.get(i);
-				for (FileCached fileCompare : files){
+			FileCached fileCompare = null;
+			for(int j=0;j<candidates.size();j++){
+				List<FileCached> files = candidates.get(j);
+				for (int i=0; i<files.size();i++){
+					fileCompare = files.get(i);
+					if(fileCompare.getFile().getAbsolutePath().equals(fileCached.getFile().getAbsolutePath())){
+						continue;
+					}
 					if (!compareFileExtensions(fileCompare.getFile(), fileCached.getFile())) {
 						continue;
 					} else if (fileCompare.getFile().getName().equals(fileCached.getFile().getName())) {
@@ -119,6 +123,7 @@ public class LookUpThread implements Runnable{
 	
 	@Override
 	public void run() {
+		//validamos si se selecciono algunos archivos especificos
 		if(fileSelectedCompare == null){
 			compareAllByCandidates();
 		}else{
