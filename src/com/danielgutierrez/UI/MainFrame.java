@@ -29,7 +29,6 @@ import javax.swing.JTextPane;
 import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 
-import sun.text.normalizer.UProperty;
 
 import com.danielgutierrez.filesLookUp.FileCached;
 import com.danielgutierrez.filesLookUp.OperationManager;
