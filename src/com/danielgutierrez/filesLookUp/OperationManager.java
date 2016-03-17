@@ -18,6 +18,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -35,6 +36,8 @@ public class OperationManager implements ThreadManager{
 
 	private static OperationManager singleton;
 	private static LinkedList<String> logStack;
+	private static Date initTime;
+	private static Date endTime;
 
 	public static void addLogToStack(String log) {
 		logStack.addLast(log);
@@ -114,28 +117,37 @@ public class OperationManager implements ThreadManager{
 		}
 	}
 
+	
 	public List<List<File>> extractCandidatesFiles() {
+		initTime = new Date();
 		writeFinished = false;
+		LinkedList<FileCached> filesSelected = null;
 		int threadsToDeploy =  Runtime.getRuntime().availableProcessors();
 		logStack.addLast("creating: " + threadsToDeploy + " threads..");
 		candidateGroup = splitListInSubList(listFiles, 100);
 		logStack.addLast("files to compare: " + listFiles.size());
 		logStack.addLast("subList size " + candidateGroup.size());
 		updateProgress(candidateGroup.size(), 0);
-		logStack.addLast("linea 119 ");
-		LinkedList<FileCached> filesSelected = new LinkedList<FileCached>(this.filesSelected);
+		logStack.addLast("linea 126 ");
+		System.out.println("126");
+		System.out.println("127");
+		if(this.filesSelected != null)
+			filesSelected = new LinkedList<FileCached>(this.filesSelected);
+		
 		logStack.addLast("progress updated ");
 		filesEqual = new ArrayList<List<FileCached>>();
 		LookUpThread lookUpThread;
 		LookUpThread.threadsAlive = threadsToDeploy;
-		logStack.addLast("theads deployed: " + LookUpThread.threadsAlive);
+		logStack.addLast("threads deployed: " + LookUpThread.threadsAlive);
 		for (int i = 0; (i < threadsToDeploy); i++) {
 			lookUpThread = new LookUpThread(candidateGroup, filesEqual, filesSelected);
 			lookUpThread.setOnGroupThreadFinished(this);
 			lookUpThread.setName("Searcher_" + i);
 			lookUpThread.pickupFile();
 		}
+		
 		// No finalizamos el metodo hasta que finalicen todos los threads
+		
 		while (LookUpThread.threadsAlive != 0 || !writeFinished) {
 			try {
 				System.out.println("sleep 5s: " + LookUpThread.threadsAlive);
@@ -280,7 +292,6 @@ public class OperationManager implements ThreadManager{
 		System.out.println("scan finished");
 		logStack.addLast("scan finished");
 		SwingUtilities.invokeLater(new Runnable(){
-
 			@Override
 			public void run() {
 				MainFrame.showDialog("sorting files...");
@@ -294,7 +305,7 @@ public class OperationManager implements ThreadManager{
 			public void run() {
 				MainFrame.hideDialog();
 				MainFrame.lblFiles.setText(String.valueOf(listFiles.size()));
-				JOptionPane.showMessageDialog(progressBar.getParent(), "Proccess finished successfull");
+				JOptionPane.showMessageDialog(progressBar.getParent(), "Process finished successfull");
 			}
 		});
 		this.isOpenProgressInfo = true;
@@ -390,7 +401,7 @@ public class OperationManager implements ThreadManager{
 
 			@Override
 			public void run() {
-				JOptionPane.showMessageDialog(progressBar.getParent(), "Proccess finished successfull");
+				JOptionPane.showMessageDialog(progressBar.getParent(), "Process finished successfull");
 			}
 		});
 	}
@@ -419,6 +430,13 @@ public class OperationManager implements ThreadManager{
 				if (output != null) {
 					output.close();
 					showResultScreen(file);
+					endTime = new Date();
+					logStack.addLast("_time: "+((endTime.getTime()-initTime.getTime())/1000));
+/*					SwingUtilities.invokeLater(new Runnable(){
+						@Override
+						public void run() {
+						}
+					});*/
 				}
 			} catch (IOException e) {
 				e.printStackTrace();

@@ -31,7 +31,11 @@ public class ManagerWorker<T, V> extends SwingWorker<Object,Object> {
 			if (manager.getFilesSelected() != null) {
 				manager.addFilesFromSelected(manager.getFilesSelected());
 			}
-			manager.extractCandidatesFiles();
+			try{
+				manager.extractCandidatesFiles();
+			}catch(Exception e){
+				e.printStackTrace();
+			}
 			System.out.println("turning off the log");
 			LogWorker.turnoffLogFlag();
 			break;

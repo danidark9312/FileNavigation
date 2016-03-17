@@ -159,8 +159,8 @@ public class MainFrame{
 		pnlButtonsTool.add(btnSelectBaseFolder, gbc_btnSelectBaseFolder);
 		btnScanDisk = new JButton("Scan Disk");
 		btnScanDisk.setEnabled(false);
+		
 		btnScanDisk.addActionListener(new ActionListener(){
-
 			public void actionPerformed(ActionEvent e) {
 				scanAction();
 			}
@@ -218,15 +218,15 @@ public class MainFrame{
 		txtPane = new JTextPane();
 		txtPane.setEditable(false);
 		scrollPane.setViewportView(txtPane);
-		JPanel panel = new JPanel();
-		pnlScrollContainer.add(panel, BorderLayout.NORTH);
-		panel.setBorder(new BevelBorder(BevelBorder.RAISED, null, null, null, null));
-		GridBagLayout gbl_panel = new GridBagLayout();
-		gbl_panel.columnWidths = new int[] { 100, 100, 149 };
-		gbl_panel.rowHeights = new int[] { 30, 16 };
-		gbl_panel.columnWeights = new double[] { 0.0, 0.0, 1.0 };
-		gbl_panel.rowWeights = new double[] { 0.0, 1.0 };
-		panel.setLayout(gbl_panel);
+		JPanel pnlInfo = new JPanel();
+		pnlScrollContainer.add(pnlInfo, BorderLayout.NORTH);
+		pnlInfo.setBorder(new BevelBorder(BevelBorder.RAISED, null, null, null, null));
+		GridBagLayout gbl_pnlInfo = new GridBagLayout();
+		gbl_pnlInfo.columnWidths = new int[] { 100, 100, 149 };
+		gbl_pnlInfo.rowHeights = new int[] { 30, 16 };
+		gbl_pnlInfo.columnWeights = new double[] { 0.0, 0.0, 1.0 };
+		gbl_pnlInfo.rowWeights = new double[] { 0.0, 1.0 };
+		pnlInfo.setLayout(gbl_pnlInfo);
 		// lblBaseFolder = new JLabel("Folder Selected:");
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.weightx = 0.5;
@@ -237,7 +237,7 @@ public class MainFrame{
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		JLabel label = new JLabel("Folder Selected:");
-		panel.add(label, gbc);
+		pnlInfo.add(label, gbc);
 		lblBaseFolder = new JLabel("none");
 		GridBagConstraints gbc_lblBaseFolder = new GridBagConstraints();
 		gbc_lblBaseFolder.weightx = 0.5;
@@ -247,26 +247,26 @@ public class MainFrame{
 		gbc_lblBaseFolder.insets = new Insets(0, 0, 5, 5);
 		gbc_lblBaseFolder.gridx = 1;
 		gbc_lblBaseFolder.gridy = 0;
-		panel.add(lblBaseFolder, gbc_lblBaseFolder);
-		JPanel panel_1 = new JPanel();
-		GridBagConstraints gbc_panel_1 = new GridBagConstraints();
-		gbc_panel_1.anchor = GridBagConstraints.EAST;
-		gbc_panel_1.gridwidth = 0;
-		gbc_panel_1.insets = new Insets(0, 0, 5, 0);
-		gbc_panel_1.gridheight = 2;
-		gbc_panel_1.gridx = 2;
-		gbc_panel_1.gridy = 0;
-		panel.add(panel_1, gbc_panel_1);
-		panel_1.setLayout(new BorderLayout(5, 5));
-		JButton btnNewButton = new JButton("");
-		btnNewButton.addActionListener(new ActionListener(){
+		pnlInfo.add(lblBaseFolder, gbc_lblBaseFolder);
+		JPanel panelCleanBtn = new JPanel();
+		GridBagConstraints gbc_panelCleanBtn = new GridBagConstraints();
+		gbc_panelCleanBtn.anchor = GridBagConstraints.EAST;
+		gbc_panelCleanBtn.gridwidth = 0;
+		gbc_panelCleanBtn.insets = new Insets(0, 0, 5, 0);
+		gbc_panelCleanBtn.gridheight = 2;
+		gbc_panelCleanBtn.gridx = 2;
+		gbc_panelCleanBtn.gridy = 0;
+		pnlInfo.add(panelCleanBtn, gbc_panelCleanBtn);
+		panelCleanBtn.setLayout(new BorderLayout(5, 5));
+		JButton btnClean = new JButton("");
+		btnClean.addActionListener(new ActionListener(){
 
 			public void actionPerformed(ActionEvent e) {
 				txtPane.setText("");
 			}
 		});
-		btnNewButton.setIcon(new ImageIcon("D:\\DanielGutierrez\\Proyectos\\FileNavigation\\FileNavigation\\icons\\clearConsole2.png"));
-		panel_1.add(btnNewButton, BorderLayout.CENTER);
+		btnClean.setIcon(new ImageIcon("D:\\DanielGutierrez\\Proyectos\\FileNavigation\\FileNavigation\\icons\\clearConsole2.png"));
+		panelCleanBtn.add(btnClean, BorderLayout.CENTER);
 		JLabel lblFilesFound = new JLabel("Files Found:");
 		GridBagConstraints gbc_lblFilesFound = new GridBagConstraints();
 		gbc_lblFilesFound.weightx = 0.5;
@@ -276,7 +276,7 @@ public class MainFrame{
 		gbc_lblFilesFound.insets = new Insets(0, 0, 5, 5);
 		gbc_lblFilesFound.gridx = 0;
 		gbc_lblFilesFound.gridy = 1;
-		panel.add(lblFilesFound, gbc_lblFilesFound);
+		pnlInfo.add(lblFilesFound, gbc_lblFilesFound);
 		lblFiles = new JLabel("0");
 		GridBagConstraints gbc_lblFiles = new GridBagConstraints();
 		gbc_lblFiles.weightx = 0.5;
@@ -286,7 +286,7 @@ public class MainFrame{
 		gbc_lblFiles.fill = GridBagConstraints.BOTH;
 		gbc_lblFiles.gridx = 1;
 		gbc_lblFiles.gridy = 1;
-		panel.add(lblFiles, gbc_lblFiles);
+		pnlInfo.add(lblFiles, gbc_lblFiles);
 		filePanel = new JPanel();
 		frame.getContentPane().add(filePanel);
 		filePanel.setLayout(new BorderLayout(0, 0));
@@ -294,7 +294,7 @@ public class MainFrame{
 		filePanel.add(progressBar, BorderLayout.NORTH);
 		// progressBar.setForeground(Color.blue);
 		// progressBar.setForeground(new Color(246, 156, 85));
-		progressBar.setValue(50);
+		progressBar.setValue(0);
 		progressBar.setStringPainted(true);
 		manager.initDialog(progressBar, txtPane);
 		chooserDialog = new FileChooserDialog();
@@ -331,7 +331,8 @@ public class MainFrame{
 
 	private void scanAction() {
 		FileCached filesSelected[] = chooserDialog.getAllFilesAdded();
-		if (chooserDialog.isVisible() && filesSelected != null || !chooserDialog.isVisible()) {
+		if ((!filePanel.equals(chooserDialog.getParent())&& filesSelected == null)
+				||(filePanel.equals(chooserDialog.getParent()) && filesSelected != null)){
 			manager.setParameterScan(baseDir.getAbsolutePath(), false);
 			LogWorker.turnonLogFlag();
 			new LogWorker(manager).execute();
@@ -363,15 +364,15 @@ public class MainFrame{
 			if ((showConfirmDialog(frame,
 					"Matching all file may take too much time, you should select a base file directory carefully, do you want to continue ?", "Warning!") != JOptionPane.YES_OPTION)) {
 				((JCheckBox) changeEvent.getSource()).setSelected(false);
-				frame.getContentPane().add(filePanel);
+				filePanel.add(chooserDialog);
 				//chooserDialog.setVisible(true);
 			} else {
 				//chooserDialog.setVisible(false);
-				frame.getContentPane().remove(filePanel);
+				filePanel.remove(chooserDialog);
 				chooserDialog.cleanAllElementsInTable();
 			}
 		} else {
-			frame.getContentPane().add(filePanel);
+			filePanel.add(chooserDialog);
 			//chooserDialog.setVisible(true);
 		}
 		

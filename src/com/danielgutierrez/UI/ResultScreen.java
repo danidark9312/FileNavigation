@@ -15,13 +15,15 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
+import javax.swing.JScrollPane;
 
 
 public class ResultScreen extends JFrame{
 
 	private JPanel contentPane;
-	private JTextPane textPane;
+	private JTextPane txtPaneResult;
 	private String result;
+	private JScrollPane scrollPane;
 	
 	
 	/**
@@ -78,10 +80,14 @@ public class ResultScreen extends JFrame{
 		contentPane.setLayout(new BorderLayout(0, 0));
 		setContentPane(contentPane);
 		
-		textPane = new JTextPane();
-		textPane.setEditable(false);
-		textPane.setText(this.result);
-		contentPane.add(textPane, BorderLayout.CENTER);
+		scrollPane = new JScrollPane();
+		
+		txtPaneResult = new JTextPane();
+		txtPaneResult.setEditable(false);
+		//contentPane.add(textPane, BorderLayout.CENTER);
+		
+		scrollPane.setViewportView(txtPaneResult);
+		contentPane.add(scrollPane, BorderLayout.CENTER);
 		
 		JPanel panel = new JPanel();
 		panel.setBackground(new Color(0.5f,0.5f,0.5f,0.2f));
