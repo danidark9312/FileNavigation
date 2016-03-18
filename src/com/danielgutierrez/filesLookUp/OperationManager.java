@@ -118,6 +118,11 @@ public class OperationManager implements ThreadManager{
 	}
 
 	
+	/**
+	 * Metodo para extraer los posibles archivos iguales
+	 * @return lista de archivos iguales
+	 */
+	
 	public List<List<File>> extractCandidatesFiles() {
 		initTime = new Date();
 		writeFinished = false;
@@ -150,8 +155,8 @@ public class OperationManager implements ThreadManager{
 		
 		while (LookUpThread.threadsAlive != 0 || !writeFinished) {
 			try {
-				System.out.println("sleep 5s: " + LookUpThread.threadsAlive);
-				Thread.sleep(5000);
+				System.out.println("sleep 1s: " + LookUpThread.threadsAlive);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -220,9 +225,11 @@ public class OperationManager implements ThreadManager{
 	}
 
 	public void log(String text) {
+		
 		String textToShow = this.log.getText() + "\n" + text;
 		textToShow = textToShow.length() > 2000 ? (textToShow.substring(textToShow.length() - 2000, textToShow.length())) : (textToShow);
 		this.log.setText(textToShow);
+		
 	}
 
 	private void lookupFiles(String parent) {
@@ -253,7 +260,7 @@ public class OperationManager implements ThreadManager{
 		 * System.out.println logStack.addLast("Thread " +
 		 * Thread.currentThread().getName() + " finished");
 		 */
-		System.out.println("validating threads alive: " + LookUpThread.threadsAlive + " and write finish: " + writeFinished);
+		System.out.println("validating threads alive: " + LookUpThread.threadsAlive + " and write "+(writeFinished?"finished":"unfinished"));
 		if (LookUpThread.threadsAlive == 0 && !writeFinished) {
 			writeOnFileGroups(filesEqual);
 			writeFinished = true;
@@ -261,12 +268,14 @@ public class OperationManager implements ThreadManager{
 	}
 
 	public void readFilesIntoList(File path) throws IOException {
+		new LogWorker(this).execute();
+		MainFrame.showDialog("Loading data...",false);
 		path = (path == null) ? new File("") : path;
 		File file = path;
 		if (file.exists())
-			log("file does exists");
+			addLogToStack("file does exists");
 		else {
-			log("file not found");
+			addLogToStack("file not found");
 			return;
 		}
 		DataInput output = new DataInputStream(new FileInputStream(file));
@@ -276,8 +285,13 @@ public class OperationManager implements ThreadManager{
 			while ((tempDir = output.readUTF()) != null) {
 				listFiles.add(new FileCached(tempDir));
 			}
+			MainFrame.hideDialog();
+			MainFrame.btnSaveResult.setEnabled(true);
+			MainFrame.btnSearchSimilarFiles.setEnabled(true);
 		} catch (EOFException e) {
-			/* System.out.println */log(listFiles.size() + " files read");
+			/* System.out.println */addLogToStack(listFiles.size() + " files read");
+		}finally{
+			LogWorker.turnoffLogFlag();
 		}
 	}
 
@@ -330,7 +344,14 @@ public class OperationManager implements ThreadManager{
 	private void showResultScreen(File resultFile) {
 		String result = getResult(resultFile);
 		SwingUtilities.invokeLater(new Runnable(){
-
+			@Override
+			public void run() {
+				ResultScreen.showResult(result);
+			}
+		});
+	}
+	private void showResultScreen(String result) {
+		SwingUtilities.invokeLater(new Runnable(){
 			@Override
 			public void run() {
 				ResultScreen.showResult(result);
@@ -409,16 +430,24 @@ public class OperationManager implements ThreadManager{
 	private void writeOnFileGroups(List<List<FileCached>> candidateGroup) {
 		logStack.addLast("preparing for saving results");
 		File file = this.dirSaveResult;
+		StringBuilder sb = new StringBuilder();
 		logStack.addLast("escribiendo..: " + file.getAbsolutePath());
 		BufferedWriter output = null;
 		try {
 			file.createNewFile();
 			output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
+			String outputFileDir = null;
 			for (List<FileCached> list : candidateGroup) {
 				for (FileCached fileTmp : list) {
-					output.write(fileTmp.getFile().getAbsolutePath() + " : " + readableFileSize(fileTmp.size));
+					outputFileDir = fileTmp.getFile().getAbsolutePath() + " : " + readableFileSize(fileTmp.size);
+					
+					output.write(outputFileDir);
 					output.newLine();
+					
+					sb.append(outputFileDir);
+					sb.append("\n");
 				}
+				sb.append("\n");
 				output.newLine();
 			}
 			logStack.addLast("Escritura finalizada");
@@ -429,14 +458,9 @@ public class OperationManager implements ThreadManager{
 			try {
 				if (output != null) {
 					output.close();
-					showResultScreen(file);
+					showResultScreen(sb.toString());
 					endTime = new Date();
 					logStack.addLast("_time: "+((endTime.getTime()-initTime.getTime())/1000));
-/*					SwingUtilities.invokeLater(new Runnable(){
-						@Override
-						public void run() {
-						}
-					});*/
 				}
 			} catch (IOException e) {
 				e.printStackTrace();

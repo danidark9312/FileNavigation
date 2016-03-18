@@ -34,6 +34,7 @@ import com.danielgutierrez.filesLookUp.FileCached;
 import com.danielgutierrez.filesLookUp.OperationManager;
 import com.danielgutierrez.workers.LogWorker;
 import com.danielgutierrez.workers.ManagerWorker;
+import java.awt.FlowLayout;
 
 public class MainFrame{
 
@@ -74,7 +75,10 @@ public class MainFrame{
 	}
 
 	public static void showDialog(String text) {
-		modalMessage.showDialog(text);
+		modalMessage.showDialog(text,false);
+	}
+	public static void showDialog(String text,boolean closeable) {
+		modalMessage.showDialog(text,closeable);
 	}
 
 	private JLabel lblBaseFolder;
@@ -91,6 +95,9 @@ public class MainFrame{
 		initialize();
 	}
 
+	/**
+	 * Accion donde se comparan todos los archivos escaneados en busca de repetidos
+	 */
 	private void compareSimilarAction() {
 		FileDialog fd = new FileDialog(frame, "Save Result", FileDialog.SAVE);
 		fd.setFile("scan.dup");
@@ -290,6 +297,14 @@ public class MainFrame{
 		filePanel = new JPanel();
 		frame.getContentPane().add(filePanel);
 		filePanel.setLayout(new BorderLayout(0, 0));
+		
+		JPanel pnlAuthorInfo = new JPanel();
+		filePanel.add(pnlAuthorInfo, BorderLayout.SOUTH);
+		FlowLayout fl_pnlAuthorInfo = (FlowLayout) pnlAuthorInfo.getLayout();
+		fl_pnlAuthorInfo.setHgap(10);
+		
+		JLabel lblCopyrightDanidarkanimacciondAll = new JLabel("Copyright danidark9312/Animaccion3D all rights reserved");
+		pnlAuthorInfo.add(lblCopyrightDanidarkanimacciondAll);
 		JProgressBar progressBar = new JProgressBar();
 		filePanel.add(progressBar, BorderLayout.NORTH);
 		// progressBar.setForeground(Color.blue);
@@ -302,6 +317,9 @@ public class MainFrame{
 		chooserDialog.setVisible(true);
 	}
 
+	/**
+	 * Metodo para cargar un listado de archivos previamente escaneados
+	 */
 	private void loadScanAction() {
 		FileDialog fd = new FileDialog(frame, "Choose a file", FileDialog.LOAD);
 		fd.setFile("scan.res");
@@ -316,6 +334,9 @@ public class MainFrame{
 		}
 	}
 
+	/**
+	 * Almacenamos los resultados del proceso para ser mostrados
+	 */
 	private void saveResultAction() {
 		FileDialog fd = new FileDialog(frame, "Choose a file", FileDialog.SAVE);
 		fd.setFile("scan.res");
@@ -329,8 +350,12 @@ public class MainFrame{
 			}
 	}
 
+	/**
+	 * Se inicia el escaneo en la carpeta seleccionada
+	 */
 	private void scanAction() {
 		FileCached filesSelected[] = chooserDialog.getAllFilesAdded();
+		
 		if ((!filePanel.equals(chooserDialog.getParent())&& filesSelected == null)
 				||(filePanel.equals(chooserDialog.getParent()) && filesSelected != null)){
 			manager.setParameterScan(baseDir.getAbsolutePath(), false);
@@ -338,10 +363,14 @@ public class MainFrame{
 			new LogWorker(manager).execute();
 			new ManagerWorker(manager, ManagerWorker.OPERATION_SCAN).execute();
 		} else {
-			showDialog("You must add at least one file to be scanned");
+			
+			showDialog("You must add at least one file to be scanned or mark the option \"Find al files\"");
 		}
 	}
 
+	/**
+	 * Se selecciona la carpeta raíz base con un componente selector de archivo
+	 */
 	private void selectBaseDirectoryAction() {
 		JFileChooser fc = new JFileChooser();
 		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -355,9 +384,7 @@ public class MainFrame{
 		}
 	}
 
-	/**
-	 * Initialize the contents of the frame.
-	 */
+	
 	private void validateChangeCheckBox(ActionEvent changeEvent) {
 		JCheckBox box = (JCheckBox) changeEvent.getSource();
 		if (box.isSelected()) {

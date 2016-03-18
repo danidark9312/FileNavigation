@@ -83,7 +83,9 @@ public class ResultScreen extends JFrame{
 		scrollPane = new JScrollPane();
 		
 		txtPaneResult = new JTextPane();
+		txtPaneResult.setText(result);
 		txtPaneResult.setEditable(false);
+		
 		//contentPane.add(textPane, BorderLayout.CENTER);
 		
 		scrollPane.setViewportView(txtPaneResult);
