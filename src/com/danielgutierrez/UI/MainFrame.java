@@ -78,7 +78,7 @@ public class MainFrame{
 	}
 
 	public static void showDialog(String text) {
-		modalMessage.showDialog(text,false);
+		modalMessage.showDialog(text,true);
 	}
 	public static void showDialog(String text,boolean closeable) {
 		modalMessage.showDialog(text,closeable);
