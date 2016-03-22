@@ -37,8 +37,8 @@ public class LookUpThread implements Runnable{
 	
 	public void compareBySelectedList(){
 		
-		System.out.println(this.threadName+": picking a new file");
-		OperationManager.addLogToStack("Thread "+LookUpThread.this.threadName+" picking a new file");
+		System.out.println(this.threadName+": picking a new group");
+		OperationManager.addLogToStack("Thread "+LookUpThread.this.threadName+" picking a new group");
 		
 		FileCached fileCached = fileSelectedCompare.poll();
 		
@@ -81,8 +81,8 @@ public class LookUpThread implements Runnable{
 		}
 	public void compareAllByCandidates(){
 		
-		System.out.println(this.threadName+": picking a new file");
-		OperationManager.addLogToStack("Thread "+LookUpThread.this.threadName+" picking a new file");
+		System.out.println(this.threadName+": picking a new group");
+		OperationManager.addLogToStack("Thread "+LookUpThread.this.threadName+" picking a new group");
 		
 		LinkedList<FileCached> comparableList = candidates.poll();
 		if(comparableList == null){
@@ -191,7 +191,7 @@ private boolean compareFilesByData(File file1,File file2){
 		}else{
 			System.out.println("finishing thread :"+threadName);
 			threadsAlive--;
-			OperationManager.addLogToStack("finish "+this.threadName+" thread");
+			OperationManager.addLogToStack("finishing "+this.threadName+" thread");
 			manager.onGroupThreadFinished();
 		}
 	}
