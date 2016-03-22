@@ -38,7 +38,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.ScrollPaneConstants;
 
-import com.danielgutierrez.thread.FileCached;
+import com.danielgutierrez.filesLookUp.FileCached;
 
 public class FileChooserDialog extends JPanel{
 	private JTable table;

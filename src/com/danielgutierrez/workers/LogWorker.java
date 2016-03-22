@@ -5,7 +5,7 @@ import java.util.List;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
-import com.danielgutierrez.thread.OperationManager;
+import com.danielgutierrez.filesLookUp.OperationManager;
 
 public class LogWorker<T, V> extends SwingWorker<Object,Object> {
 	OperationManager manager; 

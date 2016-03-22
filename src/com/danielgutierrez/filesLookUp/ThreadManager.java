@@ -1,4 +1,4 @@
-package com.danielgutierrez.thread;
+package com.danielgutierrez.filesLookUp;
 
 public interface ThreadManager {
 	void onGroupThreadFinished();

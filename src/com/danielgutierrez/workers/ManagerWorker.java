@@ -6,7 +6,7 @@ import java.util.List;
 import javax.swing.SwingWorker;
 
 import com.danielgutierrez.UI.MainFrame;
-import com.danielgutierrez.thread.OperationManager;
+import com.danielgutierrez.filesLookUp.OperationManager;
 
 public class ManagerWorker<T, V> extends SwingWorker<Object,Object> {
 	OperationManager manager; 

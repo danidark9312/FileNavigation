@@ -1,4 +1,4 @@
-package com.danielgutierrez.thread;
+package com.danielgutierrez.filesLookUp;
 
 import java.io.File;
 
