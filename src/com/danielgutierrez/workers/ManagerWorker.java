@@ -2,9 +2,11 @@ package com.danielgutierrez.workers;
 
 import java.util.Arrays;
 import java.util.List;
+
 import javax.swing.SwingWorker;
+
 import com.danielgutierrez.UI.MainFrame;
-import com.danielgutierrez.filesLookUp.OperationManager;
+import com.danielgutierrez.thread.OperationManager;
 
 public class ManagerWorker<T, V> extends SwingWorker<Object,Object> {
 	OperationManager manager; 

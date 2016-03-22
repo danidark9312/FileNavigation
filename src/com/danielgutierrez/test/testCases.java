@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import com.danielgutierrez.filesLookUp.OperationManager;
+import com.danielgutierrez.thread.OperationManager;
 
 public class testCases {
 	

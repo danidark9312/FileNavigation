@@ -30,10 +30,12 @@ import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 
 
-import com.danielgutierrez.filesLookUp.FileCached;
-import com.danielgutierrez.filesLookUp.OperationManager;
+
+import com.danielgutierrez.thread.FileCached;
+import com.danielgutierrez.thread.OperationManager;
 import com.danielgutierrez.workers.LogWorker;
 import com.danielgutierrez.workers.ManagerWorker;
+
 import java.awt.FlowLayout;
 
 public class MainFrame{
