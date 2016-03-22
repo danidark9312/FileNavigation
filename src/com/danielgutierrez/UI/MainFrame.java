@@ -32,6 +32,10 @@ import javax.swing.border.BevelBorder;
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 73c57616fc4312f9d7c7ef013408e720df7cd34d
 import com.danielgutierrez.filesLookUp.FileCached;
 import com.danielgutierrez.filesLookUp.OperationManager;
 import com.danielgutierrez.workers.LogWorker;

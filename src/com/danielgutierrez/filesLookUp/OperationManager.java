@@ -152,7 +152,7 @@ public class OperationManager implements ThreadManager{
 		
 		while (LookUpThread.threadsAlive != 0 || !writeFinished) {
 			try {
-				System.out.println("sleep 1s: " + LookUpThread.threadsAlive);
+				//System.out.println("sleep 1s: " + LookUpThread.threadsAlive);
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -449,16 +449,19 @@ public class OperationManager implements ThreadManager{
 			output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
 			String outputFileDir = null;
 			for (List<FileCached> list : candidateGroup) {
-				for (FileCached fileTmp : list) {
-					outputFileDir = fileTmp.getFile().getAbsolutePath() + " : " + readableFileSize(fileTmp.size);
-					
-					output.write(outputFileDir);
-					output.newLine();
-					
-					sb.append(outputFileDir);
+				if(list!=null && list.size()>1){
+					for (FileCached fileTmp : list) {
+						outputFileDir = fileTmp.getFile().getAbsolutePath() + " : " + readableFileSize(fileTmp.size);
+						
+						output.write(outputFileDir);
+						output.newLine();
+						
+						sb.append(outputFileDir);
+						sb.append("\n");
+					}
 					sb.append("\n");
 				}
-				sb.append("\n");
+				
 				output.newLine();
 			}
 			logStack.addLast("Escritura finalizada");

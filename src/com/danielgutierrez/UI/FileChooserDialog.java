@@ -2,18 +2,24 @@ package com.danielgutierrez.UI;
 
 import java.awt.EventQueue;
 import java.awt.FileDialog;
+
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.TransferHandler;
+
 import java.awt.BorderLayout;
+
 import javax.swing.JTable;
 import javax.swing.JLabel;
+
 import java.awt.GridLayout;
+
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
+
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.datatransfer.DataFlavor;
@@ -25,11 +31,13 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.List;
 import java.util.Vector;
+
 import javax.swing.JButton;
 import javax.swing.SwingConstants;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.ScrollPaneConstants;
+
 import com.danielgutierrez.filesLookUp.FileCached;
 
 public class FileChooserDialog extends JPanel{
