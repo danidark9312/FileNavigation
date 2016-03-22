@@ -26,14 +26,17 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
+
 
 
 import com.danielgutierrez.filesLookUp.FileCached;
 import com.danielgutierrez.filesLookUp.OperationManager;
 import com.danielgutierrez.workers.LogWorker;
 import com.danielgutierrez.workers.ManagerWorker;
+
 import java.awt.FlowLayout;
 
 public class MainFrame{
@@ -75,10 +78,15 @@ public class MainFrame{
 	}
 
 	public static void showDialog(String text) {
-		modalMessage.showDialog(text,false);
+		modalMessage.showDialog(text,true);
 	}
 	public static void showDialog(String text,boolean closeable) {
-		modalMessage.showDialog(text,closeable);
+		SwingUtilities.invokeLater(new Runnable(){
+			@Override
+			public void run() {
+				modalMessage.showDialog(text,closeable);
+			}
+		});
 	}
 
 	private JLabel lblBaseFolder;
@@ -148,7 +156,7 @@ public class MainFrame{
 		btnSaveResult.addActionListener(new ActionListener(){
 
 			public void actionPerformed(ActionEvent arg0) {
-				saveResultAction();
+				saveScanAction();
 			}
 		});
 		JButton btnSelectBaseFolder = new JButton("Select Base Folder");
@@ -185,12 +193,13 @@ public class MainFrame{
 		gbc_btnSaveResult.gridy = 2;
 		pnlButtonsTool.add(btnSaveResult, gbc_btnSaveResult);
 		JButton btnLoadScan = new JButton("Load Scan");
+		
 		btnLoadScan.addActionListener(new ActionListener(){
-
 			public void actionPerformed(ActionEvent e) {
 				loadScanAction();
 			}
 		});
+		
 		GridBagConstraints gbc_btnLoadScan = new GridBagConstraints();
 		gbc_btnLoadScan.fill = GridBagConstraints.BOTH;
 		gbc_btnLoadScan.insets = new Insets(0, 0, 5, 0);
@@ -272,7 +281,7 @@ public class MainFrame{
 				txtPane.setText("");
 			}
 		});
-		btnClean.setIcon(new ImageIcon("D:\\DanielGutierrez\\Proyectos\\FileNavigation\\FileNavigation\\icons\\clearConsole2.png"));
+		btnClean.setIcon(new ImageIcon("icons/clearConsole2.png"));
 		panelCleanBtn.add(btnClean, BorderLayout.CENTER);
 		JLabel lblFilesFound = new JLabel("Files Found:");
 		GridBagConstraints gbc_lblFilesFound = new GridBagConstraints();
@@ -322,29 +331,39 @@ public class MainFrame{
 	 */
 	private void loadScanAction() {
 		FileDialog fd = new FileDialog(frame, "Choose a file", FileDialog.LOAD);
-		fd.setFile("scan.res");
-		fd.setVisible(true);
-		String file = fd.getFile();
-		if (file != null) {
-			try {
-				manager.readFilesIntoList(new File(file));
-			} catch (IOException e1) {
-				JOptionPane.showMessageDialog(frame, "No se encuentra el archivo");
+		
+		Thread thread = new Thread(new Runnable(){
+			
+			@Override
+			public void run() {
+				fd.setFile("scan.res");
+				fd.setVisible(true);
+				String file = fd.getFile();
+				if (file != null) {
+					try {
+						manager.readFilesIntoList(new File(file));
+					} catch (IOException e1) {
+						JOptionPane.showMessageDialog(frame, "File not found");
+					}catch(Exception e){
+						JOptionPane.showMessageDialog(frame, "An unexpected error has ocurred");
+						e.printStackTrace();
+					}
+				}
 			}
-		}
+		});
+		thread.start();
 	}
 
 	/**
 	 * Almacenamos los resultados del proceso para ser mostrados
 	 */
-	private void saveResultAction() {
+	private void saveScanAction() {
 		FileDialog fd = new FileDialog(frame, "Choose a file", FileDialog.SAVE);
 		fd.setFile("scan.res");
 		fd.setVisible(true);
 		if (fd.getFile() != null)
 			try {
 				OperationManager.getInstance().writeFilesIntoFile(new File(fd.getFile()));
-				JOptionPane.showMessageDialog(frame, "Saved Successfull");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

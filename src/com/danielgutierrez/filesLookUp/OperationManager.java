@@ -60,19 +60,19 @@ public class OperationManager implements ThreadManager{
 	private List<List<FileCached>> filesEqual;
 	private JProgressBar progressBar;
 	private JTextPane log;
-	private boolean appendToCurrent;
 	private File dirSaveResult;
 	private boolean isOpenProgressInfo = true;
 	List<File> directoriesForProgress;
-	private int filesCount;
 	private int maxValueProgressBar;
 	private boolean writeFinished;
-	private boolean openWrite;
+	private boolean appendToCurrent;
+/*	private int filesCount;
+	private boolean openWrite;*/
 	private int maxBufferForLog = 600;
 
 	private OperationManager(){
-		this.listFiles = new ArrayList();
-		this.logStack = new LinkedList<String>();
+		this.listFiles = new ArrayList<FileCached>();
+		logStack = new LinkedList<String>();
 		this.directoriesForProgress = new ArrayList<File>(30);
 	}
 
@@ -133,9 +133,6 @@ public class OperationManager implements ThreadManager{
 		logStack.addLast("files to compare: " + listFiles.size());
 		logStack.addLast("subList size " + candidateGroup.size());
 		updateProgress(candidateGroup.size(), 0);
-		logStack.addLast("linea 126 ");
-		System.out.println("126");
-		System.out.println("127");
 		if(this.filesSelected != null)
 			filesSelected = new LinkedList<FileCached>(this.filesSelected);
 		
@@ -267,8 +264,11 @@ public class OperationManager implements ThreadManager{
 		}
 	}
 
+	
+	@SuppressWarnings("rawtypes")
 	public void readFilesIntoList(File path) throws IOException {
 		new LogWorker(this).execute();
+		
 		MainFrame.showDialog("Loading data...",false);
 		path = (path == null) ? new File("") : path;
 		File file = path;
@@ -282,14 +282,25 @@ public class OperationManager implements ThreadManager{
 		String tempDir;
 		try {
 			listFiles.clear();
+			System.out.println("invoking on thread: "+Thread.currentThread().getName());
 			while ((tempDir = output.readUTF()) != null) {
 				listFiles.add(new FileCached(tempDir));
+				System.out.println(tempDir);
 			}
-			MainFrame.hideDialog();
-			MainFrame.btnSaveResult.setEnabled(true);
-			MainFrame.btnSearchSimilarFiles.setEnabled(true);
+			
+			
 		} catch (EOFException e) {
 			/* System.out.println */addLogToStack(listFiles.size() + " files read");
+			System.out.println("invoking on thread2: "+Thread.currentThread().getName());
+			SwingUtilities.invokeLater(new Runnable(){
+				@Override
+				public void run() {
+					System.out.println("invoking on thread: "+Thread.currentThread().getName());
+					MainFrame.btnSaveResult.setEnabled(true);
+					MainFrame.btnSearchSimilarFiles.setEnabled(true);
+					MainFrame.hideDialog();
+				}
+			});
 		}finally{
 			LogWorker.turnoffLogFlag();
 		}
@@ -422,7 +433,7 @@ public class OperationManager implements ThreadManager{
 
 			@Override
 			public void run() {
-				JOptionPane.showMessageDialog(progressBar.getParent(), "Process finished successfull");
+				JOptionPane.showMessageDialog(progressBar.getParent(), "Saved Successfull");
 			}
 		});
 	}
