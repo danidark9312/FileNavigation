@@ -281,7 +281,8 @@ public class MainFrame{
 				txtPane.setText("");
 			}
 		});
-		btnClean.setIcon(new ImageIcon("icons/clearConsole2.png"));
+		
+		btnClean.setIcon(new ImageIcon(this.getClass().getResource("/cleanIcon/clearConsole2.png")));
 		panelCleanBtn.add(btnClean, BorderLayout.CENTER);
 		JLabel lblFilesFound = new JLabel("Files Found:");
 		GridBagConstraints gbc_lblFilesFound = new GridBagConstraints();
@@ -391,6 +392,7 @@ public class MainFrame{
 	 * Se selecciona la carpeta raíz base con un componente selector de archivo
 	 */
 	private void selectBaseDirectoryAction() {
+		JOptionPane.showMessageDialog(frame, new File("cleanIcon/clearConsole2.png").exists());
 		JFileChooser fc = new JFileChooser();
 		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int returnVal = fc.showOpenDialog(frame);
