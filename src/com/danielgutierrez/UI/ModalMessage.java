@@ -1,20 +1,16 @@
 package com.danielgutierrez.UI;
 
-import java.awt.EventQueue;
+import java.awt.BorderLayout;
+import java.awt.Dialog;
+import java.awt.Font;
 import java.awt.Frame;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-
-import java.awt.BorderLayout;
-
 import javax.swing.SwingConstants;
-
-import java.awt.Font;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.awt.event.WindowStateListener;
+import java.awt.Dialog.ModalityType;
+import java.awt.Dialog.ModalExclusionType;
 
 public class ModalMessage extends JDialog{
 	JLabel lblInfo;
@@ -24,7 +20,11 @@ public class ModalMessage extends JDialog{
 	 * Create the application.
 	 */
 	public ModalMessage(Frame frame,String text) {
-		super(frame,"Info",true);
+		//super(frame,"Info",Dialog.ModalityType.MODELESS);
+		super(frame,"Info");
+		setModal(false);
+		/*setModalExclusionType(ModalExclusionType.APPLICATION_EXCLUDE);
+		setModalityType(ModalityType.DOCUMENT_MODAL);*/
 		lblInfo = new JLabel("Info");
 		lblInfo.setText(text);		
 		initialize();
@@ -58,6 +58,8 @@ public class ModalMessage extends JDialog{
 		
 		if(!closeable){
 			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		}else{
+			setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		}
 		setVisible(true);
 	}

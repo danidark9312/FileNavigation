@@ -18,6 +18,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -60,19 +61,19 @@ public class OperationManager implements ThreadManager{
 	private List<List<FileCached>> filesEqual;
 	private JProgressBar progressBar;
 	private JTextPane log;
-	private boolean appendToCurrent;
 	private File dirSaveResult;
 	private boolean isOpenProgressInfo = true;
 	List<File> directoriesForProgress;
-	private int filesCount;
 	private int maxValueProgressBar;
 	private boolean writeFinished;
-	private boolean openWrite;
+	private boolean appendToCurrent;
+/*	private int filesCount;
+	private boolean openWrite;*/
 	private int maxBufferForLog = 600;
 
 	private OperationManager(){
-		this.listFiles = new ArrayList();
-		this.logStack = new LinkedList<String>();
+		this.listFiles = new ArrayList<FileCached>();
+		logStack = new LinkedList<String>();
 		this.directoriesForProgress = new ArrayList<File>(30);
 	}
 
@@ -128,18 +129,16 @@ public class OperationManager implements ThreadManager{
 		writeFinished = false;
 		LinkedList<FileCached> filesSelected = null;
 		int threadsToDeploy =  Runtime.getRuntime().availableProcessors();
+		logStack.addLast("your pc has " + threadsToDeploy+" cores availables");
 		logStack.addLast("creating: " + threadsToDeploy + " threads..");
+		logStack.addLast("creating sublists..");
 		candidateGroup = splitListInSubList(listFiles, 100);
 		logStack.addLast("files to compare: " + listFiles.size());
-		logStack.addLast("subList size " + candidateGroup.size());
+		logStack.addLast("sublists size " + candidateGroup.size());
 		updateProgress(candidateGroup.size(), 0);
-		logStack.addLast("linea 126 ");
-		System.out.println("126");
-		System.out.println("127");
 		if(this.filesSelected != null)
 			filesSelected = new LinkedList<FileCached>(this.filesSelected);
 		
-		logStack.addLast("progress updated ");
 		filesEqual = new ArrayList<List<FileCached>>();
 		LookUpThread lookUpThread;
 		LookUpThread.threadsAlive = threadsToDeploy;
@@ -256,10 +255,6 @@ public class OperationManager implements ThreadManager{
 
 	@Override
 	public synchronized void onGroupThreadFinished() {
-		/*
-		 * System.out.println logStack.addLast("Thread " +
-		 * Thread.currentThread().getName() + " finished");
-		 */
 		System.out.println("validating threads alive: " + LookUpThread.threadsAlive + " and write "+(writeFinished?"finished":"unfinished"));
 		if (LookUpThread.threadsAlive == 0 && !writeFinished) {
 			writeOnFileGroups(filesEqual);
@@ -267,8 +262,11 @@ public class OperationManager implements ThreadManager{
 		}
 	}
 
+	
+	@SuppressWarnings("rawtypes")
 	public void readFilesIntoList(File path) throws IOException {
 		new LogWorker(this).execute();
+		
 		MainFrame.showDialog("Loading data...",false);
 		path = (path == null) ? new File("") : path;
 		File file = path;
@@ -282,14 +280,21 @@ public class OperationManager implements ThreadManager{
 		String tempDir;
 		try {
 			listFiles.clear();
+			
 			while ((tempDir = output.readUTF()) != null) {
 				listFiles.add(new FileCached(tempDir));
 			}
-			MainFrame.hideDialog();
-			MainFrame.btnSaveResult.setEnabled(true);
-			MainFrame.btnSearchSimilarFiles.setEnabled(true);
+			
 		} catch (EOFException e) {
-			/* System.out.println */addLogToStack(listFiles.size() + " files read");
+			addLogToStack(listFiles.size() + " files read");
+			SwingUtilities.invokeLater(new Runnable(){
+				@Override
+				public void run() {
+					MainFrame.btnSaveResult.setEnabled(true);
+					MainFrame.btnSearchSimilarFiles.setEnabled(true);
+					MainFrame.hideDialog();
+				}
+			});
 		}finally{
 			LogWorker.turnoffLogFlag();
 		}
@@ -422,7 +427,7 @@ public class OperationManager implements ThreadManager{
 
 			@Override
 			public void run() {
-				JOptionPane.showMessageDialog(progressBar.getParent(), "Process finished successfull");
+				JOptionPane.showMessageDialog(progressBar.getParent(), "Saved Successfull");
 			}
 		});
 	}
@@ -431,29 +436,33 @@ public class OperationManager implements ThreadManager{
 		logStack.addLast("preparing for saving results");
 		File file = this.dirSaveResult;
 		StringBuilder sb = new StringBuilder();
-		logStack.addLast("escribiendo..: " + file.getAbsolutePath());
+		logStack.addLast("writing..: " + file.getAbsolutePath());
 		BufferedWriter output = null;
 		try {
 			file.createNewFile();
 			output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
 			String outputFileDir = null;
+			try {
+				orderListBySize(candidateGroup);
+				addLogToStack("the list has been sorted desc on size");
+			} catch (Exception e) {
+				addLogToStack("the list could not be sorted due exception");
+				e.printStackTrace();
+			}
 			for (List<FileCached> list : candidateGroup) {
 				if(list!=null && list.size()>1){
 					for (FileCached fileTmp : list) {
 						outputFileDir = fileTmp.getFile().getAbsolutePath() + " : " + readableFileSize(fileTmp.size);
-						
 						output.write(outputFileDir);
 						output.newLine();
-						
 						sb.append(outputFileDir);
 						sb.append("\n");
 					}
 					sb.append("\n");
+					output.newLine();
 				}
-				
-				output.newLine();
 			}
-			logStack.addLast("Escritura finalizada");
+			logStack.addLast("write finished");
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -461,9 +470,12 @@ public class OperationManager implements ThreadManager{
 			try {
 				if (output != null) {
 					output.close();
-					showResultScreen(sb.toString());
+					String result = sb.toString();
+					if(!result.trim().equals("")){
+						showResultScreen(sb.toString());
+					}
 					endTime = new Date();
-					logStack.addLast("_time: "+((endTime.getTime()-initTime.getTime())/1000));
+					logStack.addLast("time: "+((endTime.getTime()-initTime.getTime())/1000f)+" seconds");
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -477,6 +489,18 @@ public class OperationManager implements ThreadManager{
 	    final String[] units = new String[] { "B", "kB", "MB", "GB", "TB" };
 	    int digitGroups = (int) (Math.log10(size)/Math.log10(1024));
 	    return new DecimalFormat("#,##0.#").format(size/Math.pow(1024, digitGroups)) + " " + units[digitGroups];
+	}
+	
+	private void orderListBySize(List<List<FileCached>> list){
+		 Collections.sort(list, new Comparator<List<FileCached>>() {
+			@Override
+			public int compare(List<FileCached> list1, List<FileCached> list2) {
+				/*if (list1 == null || list1.size() ==0 || list2 == null || list2.size() ==0)
+					return 0;*/
+				return (int)((list1.get(0).size)-(list2.get(0).size));
+			}
+             
+         });
 	}
 }
 
