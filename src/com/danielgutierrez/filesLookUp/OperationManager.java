@@ -29,6 +29,7 @@ import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
+import com.danielgutierrez.UI.JTableResultScreen;
 import com.danielgutierrez.UI.MainFrame;
 import com.danielgutierrez.UI.ResultScreen;
 import com.danielgutierrez.workers.LogWorker;
@@ -452,7 +453,7 @@ public class OperationManager implements ThreadManager{
 			for (List<FileCached> list : candidateGroup) {
 				if(list!=null && list.size()>1){
 					for (FileCached fileTmp : list) {
-						outputFileDir = fileTmp.getFile().getAbsolutePath() + " : " + readableFileSize(fileTmp.size);
+						outputFileDir = fileTmp.getFile().getAbsolutePath() + " : " + (fileTmp.getSizeStr());
 						output.write(outputFileDir);
 						output.newLine();
 						sb.append(outputFileDir);
@@ -472,7 +473,14 @@ public class OperationManager implements ThreadManager{
 					output.close();
 					String result = sb.toString();
 					if(!result.trim().equals("")){
-						showResultScreen(sb.toString());
+						//showResultScreen(sb.toString());
+						SwingUtilities.invokeLater(new Runnable(){
+							@Override
+							public void run() {
+								new JTableResultScreen(candidateGroup).setVisible(true);								
+							}
+							
+						});
 					}
 					endTime = new Date();
 					logStack.addLast("time: "+((endTime.getTime()-initTime.getTime())/1000f)+" seconds");
@@ -484,12 +492,6 @@ public class OperationManager implements ThreadManager{
 	}
 	
 	
-	public static String readableFileSize(long size) {
-	    if(size <= 0) return "0";
-	    final String[] units = new String[] { "B", "kB", "MB", "GB", "TB" };
-	    int digitGroups = (int) (Math.log10(size)/Math.log10(1024));
-	    return new DecimalFormat("#,##0.#").format(size/Math.pow(1024, digitGroups)) + " " + units[digitGroups];
-	}
 	
 	private void orderListBySize(List<List<FileCached>> list){
 		 Collections.sort(list, new Comparator<List<FileCached>>() {
@@ -499,7 +501,6 @@ public class OperationManager implements ThreadManager{
 					return 0;*/
 				return (int)((list1.get(0).size)-(list2.get(0).size));
 			}
-             
          });
 	}
 }

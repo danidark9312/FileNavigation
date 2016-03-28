@@ -392,7 +392,6 @@ public class MainFrame{
 	 * Se selecciona la carpeta raíz base con un componente selector de archivo
 	 */
 	private void selectBaseDirectoryAction() {
-		JOptionPane.showMessageDialog(frame, new File("cleanIcon/clearConsole2.png").exists());
 		JFileChooser fc = new JFileChooser();
 		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int returnVal = fc.showOpenDialog(frame);
