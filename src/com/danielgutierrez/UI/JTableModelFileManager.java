@@ -15,10 +15,15 @@ class JTableModelFileManager extends AbstractTableModel {
 	 */
 	private static final long serialVersionUID = 1L;
 	private String[] columnNames = {"Name","File Path","Size",""};
-                                    
+	private List<List<FileCached>> candidateGroup;
     private Object[][] data;
     
     public JTableModelFileManager(List<List<FileCached>> candidateGroup){
+    	loadDataTable(candidateGroup);
+    }
+    
+    public void loadDataTable(List<List<FileCached>> candidateGroup){
+    	this.candidateGroup = candidateGroup;
     	List<FileCached> dataTemp=new ArrayList<FileCached>();
     	
     	for (List<FileCached> list : candidateGroup) {
@@ -40,6 +45,11 @@ class JTableModelFileManager extends AbstractTableModel {
     		};
     	}
     	System.out.println("table loaded");
+    	
+    }
+    public void reloadDataTable(){
+    	loadDataTable(candidateGroup);
+    	fireTableDataChanged();
     }
 
     public int getColumnCount() {
