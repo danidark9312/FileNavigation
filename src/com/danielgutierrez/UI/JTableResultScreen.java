@@ -3,36 +3,29 @@ package com.danielgutierrez.UI;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 import com.danielgutierrez.filesLookUp.FileCached;
-
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-import java.io.File;
-
-import javax.swing.JLabel;
-import javax.swing.SwingConstants;
-
-import java.awt.FlowLayout;
-import java.awt.Font;
-
-import javax.swing.JSplitPane;
-import javax.swing.JSeparator;
 
 
 public class JTableResultScreen extends JFrame{
@@ -94,6 +87,10 @@ public class JTableResultScreen extends JFrame{
 		JButton btnNewButton = new JButton("delete");
 		panel.add(btnNewButton);
 		
+		JSeparator separator = new JSeparator();
+		panel.add(separator);
+		separator.setOrientation(SwingConstants.VERTICAL);
+		
 		panel.add(new JLabel("Selected/Deleted Files: "));
 		lblSelectedFiles = new JLabel("0");
 		panel.add(lblSelectedFiles);
@@ -104,10 +101,6 @@ public class JTableResultScreen extends JFrame{
 		
 		lblDeletedFiles = new JLabel("0");
 		panel.add(lblDeletedFiles);
-		
-		JSeparator separator = new JSeparator();
-		JpnlActionPane.add(separator, BorderLayout.NORTH);
-		separator.setOrientation(SwingConstants.VERTICAL);
 		
 		JLabel lblFooter = new JLabel("Animaccion3D/danidark9312");
 		lblFooter.setFont(new Font("Tahoma", Font.PLAIN, 14));
@@ -124,13 +117,15 @@ public class JTableResultScreen extends JFrame{
 		else
 			table = new JTable();
 			
+		table.setDefaultRenderer(Object.class, new JTableModelFileManager.MyTableCellRenderer());
+		
 			table.getColumnModel().getColumn(0).setPreferredWidth(100);
 			table.getColumnModel().getColumn(0).setMinWidth(100);
-			table.getColumnModel().getColumn(0).setMaxWidth(300);
+			table.getColumnModel().getColumn(0).setMaxWidth(150);
 			
-			table.getColumnModel().getColumn(1).setPreferredWidth(600);
+			table.getColumnModel().getColumn(1).setPreferredWidth(800);
 			table.getColumnModel().getColumn(1).setMinWidth(300);
-			table.getColumnModel().getColumn(1).setMaxWidth(800);
+			table.getColumnModel().getColumn(1).setMaxWidth(1200);
 			
 			table.getColumnModel().getColumn(2).setPreferredWidth(40);
 			table.getColumnModel().getColumn(2).setMinWidth(40);
@@ -140,7 +135,7 @@ public class JTableResultScreen extends JFrame{
 			table.getColumnModel().getColumn(3).setMinWidth(10);
 			table.getColumnModel().getColumn(3).setMaxWidth(50);
 			
-			table.setPreferredScrollableViewportSize(new Dimension(1200, 70));
+			table.setPreferredScrollableViewportSize(new Dimension(800, 70));
 			
 			
 			table.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
