@@ -202,6 +202,7 @@ public class JTableResultScreen extends JFrame{
 		
 		if (confirmationDelete == JOptionPane.YES_OPTION) {
 			File temp;
+			MainFrame.showDialog("Deleting selected files...",false);
 			for (Object[] object : dataSelected) {
 				temp = new File((String) object[1]);
 				long tempSize = temp.length();
@@ -212,6 +213,8 @@ public class JTableResultScreen extends JFrame{
 					 
 				 }
 			}
+			MainFrame.hideDialog();
+			
 			((JTableModelFileManager) table.getModel()).reloadDataTable();
 			JOptionPane.showMessageDialog(this, "The files has been deleted successfull, now you have "+FileCached.readableFileSize(totalSizeDeleted)+" more on free space");
 			setLabelValue(lblDeletedFiles, 0);

@@ -13,6 +13,7 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import javax.swing.ImageIcon;
@@ -29,6 +30,7 @@ import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
+
 
 
 
@@ -343,8 +345,10 @@ public class MainFrame{
 				if (file != null) {
 					try {
 						manager.readFilesIntoList(new File(file));
+					}catch(FileNotFoundException e){
+						JOptionPane.showMessageDialog(frame, "File not found");	
 					} catch (IOException e1) {
-						JOptionPane.showMessageDialog(frame, "File not found");
+						JOptionPane.showMessageDialog(frame, "Error reading the file, might not be a valid file");
 					}catch(Exception e){
 						JOptionPane.showMessageDialog(frame, "An unexpected error has ocurred");
 						e.printStackTrace();

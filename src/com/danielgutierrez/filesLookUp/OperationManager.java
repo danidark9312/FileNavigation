@@ -293,11 +293,12 @@ public class OperationManager implements ThreadManager{
 				public void run() {
 					MainFrame.btnSaveResult.setEnabled(true);
 					MainFrame.btnSearchSimilarFiles.setEnabled(true);
-					MainFrame.hideDialog();
+					
 				}
 			});
 		}finally{
 			LogWorker.turnoffLogFlag();
+			MainFrame.hideDialog();
 		}
 	}
 
@@ -499,7 +500,9 @@ public class OperationManager implements ThreadManager{
 			public int compare(List<FileCached> list1, List<FileCached> list2) {
 				/*if (list1 == null || list1.size() ==0 || list2 == null || list2.size() ==0)
 					return 0;*/
-				return (int)((list1.get(0).size)-(list2.get(0).size));
+				return Long.valueOf(list1.get(0).size).compareTo(Long.valueOf(list2.get(0).size));
+				//(int)((list1.get(0).size)-(list2.get(0).size));
+				
 			}
          });
 	}
