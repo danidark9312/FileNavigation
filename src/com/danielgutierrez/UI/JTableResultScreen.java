@@ -163,12 +163,10 @@ public class JTableResultScreen extends JFrame{
 						countSelectedFile();
 					}
 				}
-			})
-			;
-			;
+			});;
 			
-		JTableContent.add(table.getTableHeader(),BorderLayout.NORTH);
-		JTableContent.add(table,BorderLayout.CENTER);
+			JTableContent.add(table.getTableHeader(),BorderLayout.NORTH);
+			JTableContent.add(table,BorderLayout.CENTER);
 		contentPane.add(scrllPane, BorderLayout.CENTER);
 	}
 	
@@ -190,6 +188,7 @@ public class JTableResultScreen extends JFrame{
 	
 	
 	
+	
 	private void deleteSelectedFiles(){
 		if(dataSelected == null){
 			return;
@@ -205,19 +204,17 @@ public class JTableResultScreen extends JFrame{
 			for (Object[] object : dataSelected) {
 				temp = new File((String) object[1]);
 				long tempSize = temp.length();
-				 if(temp.delete()){
-					 totalSizeDeleted += tempSize;
-					 removeElementFromList(temp);
-					 setLabelValue(lblDeletedFiles, ++countDeleteFiles);
-					 
-				 }
+				if(temp.delete()){
+					totalSizeDeleted += tempSize;
+					removeElementFromList(temp);
+					setLabelValue(lblDeletedFiles, ++countDeleteFiles);
+				}
 			}
 			((JTableModelFileManager) table.getModel()).reloadDataTable();
 			JOptionPane.showMessageDialog(this, "The files has been deleted successfull, now you have "+FileCached.readableFileSize(totalSizeDeleted)+" more on free space");
 			setLabelValue(lblDeletedFiles, 0);
 		}
 	}
-	
 	private void removeElementFromList(File temp){
 		FileCached fileCached;
 		for(List<FileCached> fileLists : candidateGroup){
