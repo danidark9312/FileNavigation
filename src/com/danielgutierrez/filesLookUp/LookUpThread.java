@@ -37,7 +37,7 @@ public class LookUpThread implements Runnable{
 	
 	public void compareBySelectedList(){
 		
-		System.out.println(this.threadName+": picking a new group");
+		//System.out.println(this.threadName+": picking a new group");
 		OperationManager.addLogToStack("Thread "+LookUpThread.this.threadName+" picking a new group");
 		
 		FileCached fileCached = fileSelectedCompare.poll();
@@ -46,10 +46,10 @@ public class LookUpThread implements Runnable{
 			pickupSelectedFile();
 			return;
 		}
-		System.out.println("comparing file: "+fileCached.getFile().getAbsolutePath());
+		//System.out.println("comparing file: "+fileCached.getFile().getAbsolutePath());
 		
 		operationManager.updateProgress(candidates.size());
-		System.out.println("Thread: "+LookUpThread.this.threadName);
+		//System.out.println("Thread: "+LookUpThread.this.threadName);
 		
 		
 			List<FileCached> equals = new ArrayList<FileCached>();
@@ -81,7 +81,7 @@ public class LookUpThread implements Runnable{
 		}
 	public void compareAllByCandidates(){
 		
-		System.out.println(this.threadName+": picking a new group");
+		//System.out.println(this.threadName+": picking a new group");
 		OperationManager.addLogToStack("Thread "+LookUpThread.this.threadName+" picking a new group");
 		
 		LinkedList<FileCached> comparableList = candidates.poll();
@@ -89,10 +89,10 @@ public class LookUpThread implements Runnable{
 			pickupFile();
 			return;
 		}
-		System.out.println("polling list "+comparableList.peek());
+		//System.out.println("polling list "+comparableList.peek());
 		
 		operationManager.updateProgress(candidates.size());
-		System.out.println("Thread: "+LookUpThread.this.threadName);
+		//System.out.println("Thread: "+LookUpThread.this.threadName);
 		FileCached fileCached = null;
 		
 		while((fileCached=comparableList.poll())!=null){
@@ -101,7 +101,7 @@ public class LookUpThread implements Runnable{
 			for(int i=0;i<comparableList.size();i++){
 				FileCached fileCompare = comparableList.get(i);
 				
-				if(!compareFileExtensions(fileCompare.getFile(),fileCached.getFile())){
+				if(fileCompare == null || !compareFileExtensions(fileCompare.getFile(),fileCached.getFile())){
 					continue;
 				}
 				else if(fileCompare.getFile().getName().equals(fileCached.getFile().getName())){
@@ -189,7 +189,7 @@ private boolean compareFilesByData(File file1,File file2){
 			tr.setName(this.threadName);
 			tr.start();
 		}else{
-			System.out.println("finishing thread :"+threadName);
+			//System.out.println("finishing thread :"+threadName);
 			threadsAlive--;
 			OperationManager.addLogToStack("finishing "+this.threadName+" thread");
 			manager.onGroupThreadFinished();
@@ -201,7 +201,7 @@ private boolean compareFilesByData(File file1,File file2){
 			tr.setName(this.threadName);
 			tr.start();
 		}else{
-			System.out.println("finishing thread :"+threadName);
+			//System.out.println("finishing thread :"+threadName);
 			threadsAlive--;
 			OperationManager.addLogToStack("finish "+this.threadName+" thread");
 			manager.onGroupThreadFinished();

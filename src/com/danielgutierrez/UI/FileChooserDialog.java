@@ -212,7 +212,7 @@ public class FileChooserDialog extends JPanel{
 		        }
 
 		        private void displayDropLocation(String string) {
-		            System.out.println(string);
+		            //System.out.println(string);
 		        }
 		        
 		    };

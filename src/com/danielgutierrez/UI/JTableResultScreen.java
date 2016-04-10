@@ -7,6 +7,9 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.List;
 
@@ -60,7 +63,7 @@ public class JTableResultScreen extends JFrame{
 	 */
 	public JTableResultScreen(List<List<FileCached>> candidateGroup){
 		this.candidateGroup = candidateGroup;
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setExtendedState(JFrame.MAXIMIZED_BOTH);
 		setBounds(100, 100, 661, 441);
 		contentPane = new JPanel();
@@ -142,14 +145,14 @@ public class JTableResultScreen extends JFrame{
 				@Override
 				public void valueChanged(ListSelectionEvent e) {
 					if (e.getValueIsAdjusting()) {
-						System.out.println("selection done");
+						//System.out.println("selection done");
 						int row = table.getSelectedRow();
 						
 						if (row!=-1) {
-							System.out.println("column selected: " + row);
+							//System.out.println("column selected: " + row);
 							TableModel model = table.getModel();
 							Boolean isChecked = (Boolean) model.getValueAt(row, 3);
-							System.out.println("column checked " + isChecked);
+							//System.out.println("column checked " + isChecked);
 							if (isChecked)
 								model.setValueAt(Boolean.FALSE, row, 3);
 							else
@@ -158,7 +161,18 @@ public class JTableResultScreen extends JFrame{
 						countSelectedFile();
 					}
 				}
-			});;
+			});
+			
+			table.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					if(e.getButton() == MouseEvent.BUTTON3){
+						new JPopupMenuFileManager(e.getX(), e.getY(),table).show();
+					}
+					
+				}	
+			});
+			
 			
 			JTableContent.add(table.getTableHeader(),BorderLayout.NORTH);
 			JTableContent.add(table,BorderLayout.CENTER);

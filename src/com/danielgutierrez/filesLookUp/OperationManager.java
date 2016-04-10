@@ -113,7 +113,7 @@ public class OperationManager implements ThreadManager{
 		}
 		buffer = (buffer == -1) ? logStackSize : buffer;
 		String logLine = null;
-		// System.out.println("logs pendientes: "+logStack.size());
+		// //System.out.println("logs pendientes: "+logStack.size());
 		while ((logLine = logStack.poll()) != null && buffer-- != 0) {
 			log(logLine);
 		}
@@ -155,13 +155,13 @@ public class OperationManager implements ThreadManager{
 		
 		while (LookUpThread.threadsAlive != 0 || !writeFinished) {
 			try {
-				//System.out.println("sleep 1s: " + LookUpThread.threadsAlive);
+				////System.out.println("sleep 1s: " + LookUpThread.threadsAlive);
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
-		System.out.println("no more sleep");
+		//System.out.println("no more sleep");
 		return null;
 	}
 
@@ -173,7 +173,7 @@ public class OperationManager implements ThreadManager{
 	 * public static void main(String args[]){ OperationManager main = new
 	 * OperationManager(); main.lookupFiles(null); List<File> files =
 	 * main.extractFileList();
-	 * System.out.println("end: "+files.size()+" files"); try {
+	 * //System.out.println("end: "+files.size()+" files"); try {
 	 * main.writeFilesIntoFile(null); } catch (IOException e) {
 	 * e.printStackTrace(); } }
 	 */
@@ -256,7 +256,7 @@ public class OperationManager implements ThreadManager{
 
 	@Override
 	public synchronized void onGroupThreadFinished() {
-		System.out.println("validating threads alive: " + LookUpThread.threadsAlive + " and write "+(writeFinished?"finished":"unfinished"));
+		//System.out.println("validating threads alive: " + LookUpThread.threadsAlive + " and write "+(writeFinished?"finished":"unfinished"));
 		if (LookUpThread.threadsAlive == 0 && !writeFinished) {
 			writeOnFileGroups(filesEqual);
 			writeFinished = true;
@@ -303,14 +303,14 @@ public class OperationManager implements ThreadManager{
 	}
 
 	public void scanNow(String parent, boolean append, SwingWorker worker) {
-		System.out.println("starting scan ..");
+		//System.out.println("starting scan ..");
 		if (!append) {
 			listFiles.clear();
 		}
 		lookupFiles(parent);
 		logStack.addLast("files found: " + listFiles.size());
-		System.out.println("folders for progress " + directoriesForProgress.size());
-		System.out.println("scan finished");
+		//System.out.println("folders for progress " + directoriesForProgress.size());
+		//System.out.println("scan finished");
 		logStack.addLast("scan finished");
 		SwingUtilities.invokeLater(new Runnable(){
 			@Override
@@ -367,16 +367,16 @@ public class OperationManager implements ThreadManager{
 	}
 
 	public void sortFilesBySizeAsc() {
-		System.out.println("Sorting file...");
+		//System.out.println("Sorting file...");
 		List<FileCached> filesCached = new ArrayList<>(listFiles.size());
 		/*
 		 * Comparator<File> comparator = new Comparator<File>() {
 		 * @Override public int compare(File o1, File o2) { return
 		 * (int)(o1.length() - o2.length()); } };
 		 */
-		System.out.println("antes de ordenar");
+		//System.out.println("antes de ordenar");
 		Collections.sort(listFiles);
-		System.out.println("files sorted");
+		//System.out.println("files sorted");
 	}
 
 	private <T> LinkedList<LinkedList<T>> splitListInSubList(List<T> sourceList, int pieces) {
@@ -417,14 +417,14 @@ public class OperationManager implements ThreadManager{
 	public void writeFilesIntoFile(File path) throws IOException {
 		path = (path == null) ? new File("") : path;
 		File file = path;
-		System.out.println(file.getAbsolutePath());
+		//System.out.println(file.getAbsolutePath());
 		file.createNewFile();
 		DataOutput output = new DataOutputStream(new FileOutputStream(file));
-		System.out.println("starting to write.. " + listFiles.size() + " files");
+		//System.out.println("starting to write.. " + listFiles.size() + " files");
 		for (FileCached fileTmp : listFiles) {
 			output.writeUTF(fileTmp.getFile().getAbsolutePath());;
 		}
-		System.out.println("write finished..");
+		//System.out.println("write finished..");
 		SwingUtilities.invokeLater(new Runnable(){
 
 			@Override

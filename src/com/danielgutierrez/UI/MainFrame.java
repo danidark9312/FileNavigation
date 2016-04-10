@@ -348,7 +348,7 @@ public class MainFrame{
 					}catch(FileNotFoundException e){
 						JOptionPane.showMessageDialog(frame, "File not found");	
 					} catch (IOException e1) {
-						JOptionPane.showMessageDialog(frame, "Error reading the file, might not be a valid file");
+						JOptionPane.showMessageDialog(frame, "Error reading the file, it might be an invalid file");
 					}catch(Exception e){
 						JOptionPane.showMessageDialog(frame, "An unexpected error has ocurred");
 						e.printStackTrace();

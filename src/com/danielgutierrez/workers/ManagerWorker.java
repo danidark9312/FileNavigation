@@ -38,7 +38,7 @@ public class ManagerWorker<T, V> extends SwingWorker<Object,Object> {
 			}catch(Exception e){
 				e.printStackTrace();
 			}
-			System.out.println("turning off the log");
+			//System.out.println("turning off the log");
 			LogWorker.turnoffLogFlag();
 			break;
 		default:
